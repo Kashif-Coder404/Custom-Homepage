@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="CSS/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Audiowide&family=DM+Serif+Text:ital@0;1&family=Freckle+Face&family=Gabriela&family=Goldman:wght@400;700&family=Lobster&family=Luxurious+Roman&family=Noto+Serif+Khmer:wght@100..900&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap"
+      rel="stylesheet"
+    />
+    <title>Interactive Live Wallpaper</title>
+  </head>
+  <body>
+    <!-- Center -->
+    <div class="center-container">
+      <div class="center-text" id="motivQuote">Dream. Build. Conquer.</div>
+      <div class="search">
+        <input id="searchBar" placeholder="Search Google..." />
+      </div>
+      <div class="shortcuts">
+        <div class="shortcut" onclick="openSite('https://chat.openai.com')">
+          <img
+            src="https://i.ibb.co/8L2NpgCj/icons8-chatgpt-50.png"
+            alt="chatgpt Icon"
+          />
+          <span>ChatGPT</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://claude.ai')">
+          <img
+            src="https://i.ibb.co/CKymL1Wv/icons8-claude-48.png"
+            alt="claude Icon"
+          />
+          <span>Claude AI</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://gemini.google.com')">
+          <img
+            class="iconImage"
+            src="https://i.ibb.co/bjFT9QRV/icons8-gemini-ai-48.png"
+            alt="Gemini Icon"
+          />
+          <span>Gemini</span>
+        </div>
+        <div
+          class="shortcut"
+          onclick="openSite('https://notebooklm.google.com')"
+        >
+          <img
+            src="https://i.ibb.co/3y8KPmCd/notebooklm-icon.png"
+            alt="notebooklm Icon"
+          />
+          <span>NoteBookLM</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.google.com')">
+          <img
+            src="https://i.ibb.co/mVBMXyqr/icons8-google-48.png"
+            alt="Google Icon"
+          />
+          <span>Google</span>
+        </div>
+        <div
+          class="shortcut"
+          onclick="openSite('https://www.geeksforgeeks.org')"
+        >
+          <img src="https://i.ibb.co/s9f8MrYJ/gfg-favicon.png" alt="GFG Icon" />
+          <span>GfG</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.youtube.com')">
+          <img
+            src="https://i.ibb.co/hR0btBW7/icons8-youtube-48.png"
+            alt="Youtube Icon"
+          />
+          <span>Youtube</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.w3schools.com/')">
+          <img
+            src="https://i.ibb.co/rKwYYYZ7/w3schools-logo-icon.png"
+            alt="W3SchoolsIcon"
+          />
+          <span>W3Schools</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.figma.com')">
+          <img
+            src="https://i.ibb.co/CsWt942s/icons8-figma-48.png"
+            alt="figma Icon"
+          />
+          <span>Figma</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://dribbble.com/')">
+          <!--Icon needed-->
+          <img
+            src="https://i.ibb.co/tP8358HN/dribbble.png"
+            alt="dribble Icon"
+          />
+          <span>Dribble</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://behance.net/')">
+          <!--Icon needed-->
+          <img
+            src="https://i.ibb.co/dsGZZcPk/icons8-behance-48.png"
+            alt="behance Icon"
+          />
+          <span>Behance</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://mobbin.com/')">
+          <!--Icon needed-->
+          <img
+            src="https://i.ibb.co/5g6xS8SK/mobbin-icon.png"
+            alt="Mobbin Icon"
+          />
+          <span>Mobbin</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://github.com')">
+          <img src="https://i.ibb.co/8LWZWvq5/github.png" alt="Github Icon" />
+          <span>Github</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://leetcode.com/')">
+          <!--Icon needed-->
+          <img
+            src="https://i.ibb.co/pvTY0Lrt/icons8-leetcode-24.png"
+            alt="Leetcode Icon"
+          />
+          <span>LeetCode</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://replit.com/')">
+          <!--Icon needed-->
+          <img
+            src="https://i.ibb.co/S77YmK81/icons8-replit-48.png"
+            alt="Icon"
+          />
+          <span>Replit</span>
+        </div>
+        <div
+          class="shortcut"
+          onclick="openSite('https://developer.mozilla.org')"
+        >
+          <img src="https://i.ibb.co/1fntyTBY/favicon.png" alt="MDN Icon" />
+          <span>MDN Doc</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.linkedin.com')">
+          <img
+            src="https://i.ibb.co/cSxZxKQ1/linkedin.png"
+            alt="linkedIn Icon"
+          />
+          <span>LinkedIn</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.instagram.com')">
+          <img
+            src="https://i.ibb.co/BHV1ZMhH/Icon-for-the-instagram.png"
+            alt="Instagram Icon"
+          />
+          <span>Instagram</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.reddit.com')">
+          <img src="https://i.ibb.co/PZL7ZFsz/reddit.png" alt="Reddit Icon" />
+          <span>Reddit</span>
+        </div>
+        <div class="shortcut" onclick="openSite('https://www.x.com')">
+          <img src="https://i.ibb.co/C3gsCdvB/icons8-x-50.png" alt="X Icon" />
+          <span>X</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="right-sidebar">
+      <div class="widget clock" id="clock">
+        <div id="clockTime">00:00</div>
+        <small id="clockDate">Loading...</small>
+      </div>
+      <div class="widget" id="weather">
+        <span id="heading">Weather</span>
+        <br />
+        <span id="description">Loading...</span>
+        <br />
+        <span id="city">Loading...</span>,
+        <span id="Temprature">Loading...</span>,
+        <span id="windSpeed">Loading...</span>
+      </div>
+      <div class="widget" id="status">Status: Online</div>
+      <div class="widget quote">
+        “1 din me nahi hoga lekin 1 din tu zarur successful banega.”
+      </div>
+    </div>
+
+  </body>
+  <script src="JS/app.js"></script>
+</html>
