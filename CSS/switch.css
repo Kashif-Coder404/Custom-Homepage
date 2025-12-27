@@ -1,0 +1,108 @@
+.switch-wrapper .tgl {
+  display: none;
+}
+
+.switch-wrapper,
+.switch-wrapper *,
+.switch-wrapper *:after,
+.switch-wrapper *:before {
+  box-sizing: border-box;
+}
+
+.switch-wrapper .tgl::selection,
+.switch-wrapper .tgl:after::selection,
+.switch-wrapper .tgl:before::selection,
+.switch-wrapper .tgl *::selection,
+.switch-wrapper .tgl *:after::selection,
+.switch-wrapper .tgl *:before::selection,
+.switch-wrapper .tgl + .tgl-btn::selection {
+  background: none;
+}
+
+.switch-wrapper .tgl + .tgl-btn {
+  outline: 0;
+  display: block;
+  width: 4em;
+  height: 2em;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch-wrapper .tgl + .tgl-btn:after,
+.switch-wrapper .tgl + .tgl-btn:before {
+  position: relative;
+  display: block;
+  content: "";
+  width: 50%;
+  height: 100%;
+}
+
+.switch-wrapper .tgl + .tgl-btn:after {
+  left: 0;
+}
+
+.switch-wrapper .tgl + .tgl-btn:before {
+  display: none;
+}
+
+.switch-wrapper .tgl:checked + .tgl-btn:after {
+  left: 50%;
+}
+
+.switch-wrapper .tgl-skewed + .tgl-btn {
+  overflow: hidden;
+  transform: skew(-10deg);
+  backface-visibility: hidden;
+  transition: all 0.2s ease;
+  font-family: sans-serif;
+  background: #888;
+}
+
+.switch-wrapper .tgl-skewed + .tgl-btn:after,
+.switch-wrapper .tgl-skewed + .tgl-btn:before {
+  transform: skew(10deg);
+  display: inline-block;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+  position: absolute;
+  line-height: 2em;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.switch-wrapper .tgl-skewed + .tgl-btn:after {
+  left: 100%;
+  content: attr(data-tg-on);
+}
+
+.switch-wrapper .tgl-skewed + .tgl-btn:before {
+  left: 0;
+  content: attr(data-tg-off);
+}
+
+.switch-wrapper .tgl-skewed + .tgl-btn:active {
+  background: #888;
+}
+
+.switch-wrapper .tgl-skewed + .tgl-btn:active:before {
+  left: -10%;
+}
+
+.switch-wrapper .tgl-skewed:checked + .tgl-btn {
+  background: var(--icon-hover);
+}
+
+.switch-wrapper .tgl-skewed:checked + .tgl-btn:before {
+  left: -100%;
+}
+
+.switch-wrapper .tgl-skewed:checked + .tgl-btn:after {
+  left: 0;
+}
+
+.switch-wrapper .tgl-skewed:checked + .tgl-btn:active:after {
+  left: 10%;
+}
