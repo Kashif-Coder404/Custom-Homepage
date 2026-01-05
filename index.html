@@ -50,7 +50,7 @@
             <div id="prev"><span class="arrow">←</span> PREV</div>
             <div id="duaNUM">
               <h2>
-                <span id="currentDUA">2</span>/ <span id="totalDua">4</span>
+                <span id="currentDUA">2</span>/<span id="totalDua">4</span>
               </h2>
             </div>
             <div id="next">NEXT <span class="arrow">→</span></div>
@@ -69,10 +69,6 @@
 
         <div class="searchEngines">
           <div class="save-setting">
-            <!-- <label>
-            <input type="checkbox" id="saveEngineToggle" />
-            Save selected search engine
-          </label> -->
             <div class="switch-wrapper">
               <input
                 class="tgl tgl-skewed"
@@ -87,7 +83,10 @@
               ></label>
             </div>
           </div>
-
+          <div id="GPT" class="engine">ChatGPT</div>
+          <div id="GEM" class="engine">Gemini</div>
+          <div id="CLAUDE" class="engine">Claude</div>
+          <div id="PERP" class="engine">Perplexity</div>
           <div id="yt" class="engine">YouTube</div>
           <div id="WKP" class="engine">Wikipedia</div>
           <div id="MDN" class="engine">MDN Docs</div>
@@ -101,42 +100,42 @@
               placeholder="EXECUTE_SEARCH_COMMAND..."
               autocomplete="off"
             />
-            <div class="searchIcon" onclick="search()">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 28 28"
+          </div>
+          <div class="searchIcon" onclick="search()">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 28 28"
+              fill="none"
+              id="searchIconSvg"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- <circle
+                cx="14"
+                cy="14"
+                r="11"
+                fill=""
+                opacity="0.35"
+              />
+              <circle cx="14" cy="14" r="10" fill="var(--icon-bg)" /> -->
+              <circle
+                cx="12"
+                cy="12"
+                r="4.5"
+                stroke=""
+                stroke-width="2"
                 fill="none"
-                id="searchIconSvg"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <!-- <circle
-                  cx="14"
-                  cy="14"
-                  r="11"
-                  fill=""
-                  opacity="0.35"
-                />
-                <circle cx="14" cy="14" r="10" fill="var(--icon-bg)" /> -->
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="4.5"
-                  stroke=""
-                  stroke-width="2"
-                  fill="none"
-                />
-                <line
-                  x1="15.5"
-                  y1="15.5"
-                  x2="19"
-                  y2="19"
-                  stroke=""
-                  stroke-width="2"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </div>
+              />
+              <line
+                x1="15.5"
+                y1="15.5"
+                x2="19"
+                y2="19"
+                stroke=""
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
           </div>
           <div id="suggestionsBox"></div>
         </div>
@@ -389,7 +388,6 @@
         </div>
       </div>
     </div>
-
     <script src="./js/script.js"></script>
   </body>
 </html>

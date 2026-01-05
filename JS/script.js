@@ -40,6 +40,41 @@ function setEngine(id) {
   });
 }
 
+function hasSpace(text) {
+  return /\s/.test(text);
+}
+
+function looksLikeURL(text) {
+  const q = text.toLowerCase().trim();
+
+  // Space → always search
+  if (hasSpace(q)) return false;
+
+  // Protocol already exists
+  if (q.startsWith("http://") || q.startsWith("https://")) return true;
+
+  // localhost
+  if (q.startsWith("localhost")) return true;
+
+  // IP address (with optional port)
+  if (/^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(q)) return true;
+
+  // Domain pattern (ANY extension)
+  // example: abc.xyz, site.technology, my-site.dev, test.ai
+  const domainRegex =
+    /^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/.*)?$/i;
+
+  return domainRegex.test(q);
+}
+
+function normalizeURL(text) {
+  if (!text.startsWith("http://") && !text.startsWith("https://")) {
+    return "https://" + text;
+  }
+  return text;
+}
+
+
 saveToggle.addEventListener("change", () => {
   localStorage.setItem(SAVE_KEY, saveToggle.checked);
   if (saveToggle.checked) {
@@ -90,66 +125,88 @@ searchBar.addEventListener("keydown", (e) => {
   }
 });
 
-function search(engineName) {
-  function searchDefault(query) {
-    const extensions = [".com", ".org", ".in", ".app", ".net", ".io", ".be"];
-    const looksLikeDomain = extensions.some((ext) =>
-      query.toLowerCase().endsWith(ext)
-    );
-    if (looksLikeDomain && !query.includes(" ")) {
-      const url = query.startsWith("http") ? query : `https://${query}`;
-      window.open(url, "_blank");
+//Engine Selection Logic
+const engines = document.querySelectorAll(".engine");
+engines.forEach((engine) => {
+  engine.addEventListener("click", () => {
+    engines.forEach((e) => {
+      e.classList.remove("active");
+    });
+
+    engine.classList.add("active");
+  });
+});
+
+//Main Search Function
+function search() {
+  const query = document.getElementById("searchBar").value.trim();
+  if (!query) return;
+
+  const encodedQuery = encodeURIComponent(query);
+  const activeEngine = document.querySelector(".engine.active").id;
+
+  // 🌐 SMART DIRECT OPEN (ANY EXTENSION)
+  if (looksLikeURL(query)) {
+    const finalURL = normalizeURL(query);
+    window.open(finalURL, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  // 🔎 SEARCH ENGINE FLOW
+  let url = "";
+
+  const copyAndOpen = (targetUrl) => {
+    navigator.clipboard
+      .writeText(query)
+      .then(() => window.open(targetUrl, "_blank"))
+      .catch(() => window.open(targetUrl, "_blank"));
+  };
+
+  switch (activeEngine) {
+    case "GPT":
+      url = `https://chatgpt.com/?q=${encodedQuery}&hints=search`;
+      break;
+
+    case "PERP":
+      url = `https://www.perplexity.ai/search?q=${encodedQuery}`;
+      break;
+
+    case "GEM":
+      copyAndOpen("https://gemini.google.com/app");
       return;
-    }
-    window.open(
-      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-      "_blank"
-    );
+
+    case "CLAUDE":
+      copyAndOpen("https://claude.ai/new");
+      return;
+
+    case "yt":
+      url = `https://www.youtube.com/results?search_query=${encodedQuery}`;
+      break;
+
+    case "WKP":
+      url = `https://en.wikipedia.org/wiki/${encodedQuery}`;
+      break;
+
+    case "MDN":
+      url = `https://developer.mozilla.org/en-US/search?q=${encodedQuery}`;
+      break;
+
+    case "DEF":
+    default:
+      url = `https://www.google.com/search?q=${encodedQuery}`;
+      break;
   }
 
-  function searchNow() {
-    const query = searchBar.value.trim();
-    if (!query) return;
-
-    switch (engineName) {
-      case "yt":
-        window.open(
-          `https://www.youtube.com/results?search_query=${encodeURIComponent(
-            query
-          )}`,
-          "_blank"
-        );
-        break;
-
-      case "WKP":
-        window.open(
-          `https://en.wikipedia.org/wiki/Special:Search?go=Go&search=${encodeURIComponent(
-            query
-          )}`,
-          "_blank"
-        );
-        break;
-
-      case "MDN":
-        window.open(
-          `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(
-            query
-          )}`,
-          "_blank"
-        );
-        break;
-
-      case "DEF":
-      default:
-        searchDefault(query);
-        break;
-    }
-  }
-
-  searchNow();
-  searchBar.value = "";
-  suggestionsBox.style.display = "none";
+  window.open(url, "_blank");
 }
+
+
+//Enter Key Event Listener
+document.getElementById("searchBar").addEventListener("keypress", function (e) {
+  if (e.key === "Enter") {
+    search();
+  }
+});
 
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".search-wrapper"))
