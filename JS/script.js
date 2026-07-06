@@ -1426,84 +1426,10 @@ themeOpts.forEach((opt) => {
 });
 
 // --- BACKGROUNDS (Static & Video) ---
-const staticWallpapersList = [
-  "1276993.jpg",
-  "1280369.png",
-  "159Z_2107.w026.n002.628B.p1.628.jpg",
-  "330fc0c3-1f57-46d3-86f1-4dda26cf9cb8.png",
-  "5423567.jpg",
-  "AI - Car in city(JPG).jpg",
-  "Casa de campo lilas animada(JPG).jpg",
-  "ChatGPT Image Feb 27, 2026, 07_48_39 PM.png",
-  "Gemini_Generated_Image_r6n1clr6n1clr6n1.png",
-  "HD wallpaper_ Japan Street illustration, digital art, artwork, city, architecture.jpeg",
-  "Screenshot 2025-01-23 193012.png",
-  "Screenshot_2023-12-05-23-32-11-404_org.videolan.vlc.png",
-  "Screenshot_2023-12-05-23-33-00-962_org.videolan.vlc.png",
-  "Sunlit Serenity in the Autumn Forest(JPG).jpg",
-  "Wall.jpg",
-  "Wallpaper Pc   Markotop.jpg",
-  "WallpaperFusion-mystical-forest-with-glowing-trees-Original-5120x2880.jpg",
-  "WallpaperFusion-reflective-world-2560x1440.jpg",
-  "WallpaperFusion-tree-fusion-1680x1050.jpg",
-  "aot.jpg",
-  "backiee-289367-landscape.png.jpg",
-  "beach2.jpg",
-  "beautiful-selective-focus-shot-crystal-ball-reflecting-breathtaking-sunset.jpg",
-  "blue-starry-nebula-wallpaper-1920x1200_6.jpg",
-  "bright-pop-landscape-design.jpg",
-  "c4b96a41d7f32db0e4740d27eeef5dd0.jpg",
-  "denys-nevozhai-UNv2lxq8Rmo-unsplash.jpg",
-  "digital-art-isolated-house.jpg",
-  "hoodh-ahmed-6mzjJDqYU0g-unsplash.jpg",
-  "john-fowler-ppWthnXdbrM-unsplash.jpg",
-  "minimalist-purple-sky-and-mountain-ex4suuw5xd4funov.jpg",
-  "pexels-christian-heitz-285904-842711.jpg",
-  "pexels-jplenio-1110656.jpg",
-  "pexels-souvenirpixels-417074.jpg",
-  "pexels-vladalex94-1402787.jpg",
-  "pxfuel.jpg",
-  "seascape-4636264_960_720.jpg",
-  "space-nasa-kosmos-sun.jpg",
-  "sunset wallpaper hd(JPG).jpg",
-  "teal.jpg",
-  "tony-lee-i_XLLP08BOc-unsplash.jpg",
-  "unnamed (1).jpg",
-  "unnamed.jpg",
-  "upgraded_saturn_wallpaper.png",
-  "wallpaperflare.com.jpg",
-  "wallpaperflare.com_wallpaper (1).jpg",
-  "wallpaperflare.com_wallpaper (2).jpg",
-  "wallpaperflare.com_wallpaper (3).jpg",
-  "wallpaperflare.com_wallpaper (4).jpg",
-  "wallpaperflare.com_wallpaper (5).jpg",
-  "wallpaperflare.com_wallpaper (6).jpg",
-  "wallpaperflare.com_wallpaper.jpg",
-  "wavy-black-white-background.jpg",
-  "willian-justen-de-vasconcellos-jUCQRQeRs3k-unsplash.jpg",
-  "wp1892110-kimi-no-na-wa-wallpapers.png",
-  "wp1892116-kimi-no-na-wa-wallpapers.png",
-  "wp1937309-your-name-wallpapers.jpg",
-  "wp2824389-the-starry-night-wallpaper.jpg",
-  "wp8103002-pc-4k-aesthetic-wallpapers.jpg",
-];
 
 const videos = {};
 const imageWallpapersCont = document.querySelector(".imageWallpapersCont");
 const liveWallpapersCont = document.querySelector(".liveWallpapersCont");
-
-// Inject Static Images
-staticWallpapersList.forEach((file) => {
-  const div = document.createElement("div");
-  div.className = "staticOpt";
-  div.dataset.bgType = "image";
-  div.dataset.val = `./static wallpapers/${file}`;
-  const img = document.createElement("img");
-  img.src = `./static wallpapers/${file}`;
-  img.loading = "lazy";
-  div.appendChild(img);
-  imageWallpapersCont.appendChild(div);
-});
 
 // Inject Live Videos
 Object.values(videos).forEach((url) => {
