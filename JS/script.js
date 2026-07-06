@@ -108,18 +108,36 @@ window.handleSuggestions = function (data) {
   }
 };
 
+let suggestionDebounceTimer;
 searchBar.addEventListener("input", (e) => {
   const q = e.target.value.trim();
   if (!q) {
     suggestionsBox.style.display = "none";
     return;
   }
-  const script = document.createElement("script");
-  script.src = `https://suggestqueries.google.com/complete/search?client=youtube&q=${encodeURIComponent(
-    q,
-  )}&jsonp=handleSuggestions`;
-  document.body.appendChild(script);
-  script.onload = () => document.body.removeChild(script);
+
+  clearTimeout(suggestionDebounceTimer);
+  suggestionDebounceTimer = setTimeout(() => {
+    // Remove any previously pending JSONP scripts
+    const oldScript = document.getElementById("jsonp-suggestion-script");
+    if (oldScript) {
+      oldScript.remove();
+    }
+
+    const script = document.createElement("script");
+    script.id = "jsonp-suggestion-script";
+    // We use the youtube client endpoint as it provides clean JSONP without execution blockers
+    script.src = `https://suggestqueries.google.com/complete/search?client=youtube&q=${encodeURIComponent(
+      q,
+    )}&jsonp=handleSuggestions`;
+    document.body.appendChild(script);
+    
+    script.onload = () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, 300); // 300ms debounce
 });
 
 searchBar.addEventListener("keydown", (e) => {
