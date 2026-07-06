@@ -110,7 +110,7 @@ searchBar.addEventListener("input", (e) => {
     return;
   }
   const script = document.createElement("script");
-  script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(
+  script.src = `https://suggestqueries.google.com/complete/search?client=chrome-omni&q=${encodeURIComponent(
     q,
   )}&callback=handleSuggestions`;
   document.body.appendChild(script);
