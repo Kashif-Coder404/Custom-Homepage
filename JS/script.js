@@ -84,8 +84,13 @@ saveToggle.addEventListener("change", () => {
 
 window.handleSuggestions = function (data) {
   let suggestions = [];
-  if (data && Array.isArray(data[1])) {
-    // Extract suggestions: handle both flat string arrays and nested arrays
+  
+  // Parse DuckDuckGo's format
+  if (Array.isArray(data) && data.length > 0 && data[0].phrase) {
+    suggestions = data.map(item => item.phrase);
+  } 
+  // Fallback for standard OpenSearch formats (just in case)
+  else if (data && Array.isArray(data[1])) {
     suggestions = data[1].map(item => Array.isArray(item) ? item[0] : item);
   }
   
@@ -127,8 +132,8 @@ searchBar.addEventListener("input", (e) => {
     const script = document.createElement("script");
     script.id = "jsonp-suggestion-script";
     
-    // Use Google's suggest API with client=chrome for valid JSONP
-    script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(q)}&callback=handleSuggestions`;
+    // DuckDuckGo's API is very friendly to custom web dashboards
+    script.src = `https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&callback=handleSuggestions`;
     
     document.body.appendChild(script);
     
