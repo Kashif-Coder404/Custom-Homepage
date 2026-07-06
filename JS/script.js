@@ -126,10 +126,10 @@ searchBar.addEventListener("input", (e) => {
 
     const script = document.createElement("script");
     script.id = "jsonp-suggestion-script";
-    // We use the youtube client endpoint as it provides clean JSONP without execution blockers
-    script.src = `https://suggestqueries.google.com/complete/search?client=youtube&q=${encodeURIComponent(
+    // We use the Bing API because Google's JSONP endpoints are frequently blocked by adblockers and strict browser CORB policies
+    script.src = `https://api.bing.com/osjson.aspx?query=${encodeURIComponent(
       q,
-    )}&jsonp=handleSuggestions`;
+    )}&JsonType=callback&JsonCallback=handleSuggestions`;
     document.body.appendChild(script);
     
     script.onload = () => {
