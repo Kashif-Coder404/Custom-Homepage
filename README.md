@@ -1,2 +1,2 @@
-# Custom-Homepage
-This is the best replacement of the google search or new tabe . Also we can set it up as a live wallpaper for you desktop .
+# custom-dashboard
+It was the custom dashboard made for the brave browsers but also can be use in the desktop with lively app

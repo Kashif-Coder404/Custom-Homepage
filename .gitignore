@@ -1,1 +1,13 @@
-.env
+# Ignore wallpapers directory
+wallpapers/
+
+# Ignore all video files (for GitHub Pages) - This prevents auto-uploading large video files
+# This rule applies to all directories
+**/*.mp4
+**/*.mov
+**/*.avi
+**/*.webm
+
+# Optional: Ignore node_modules if you use npm
+node_modules/
+ForAI/

@@ -5,389 +5,831 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="icon"
-      href="https://cdn-icons-png.flaticon.com/512/3184/3184367.png"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Audiowide&family=Goldman:wght@400;700&family=Share+Tech+Mono&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3184/3184367.png" />
+    <!-- Modern Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;600;700&display=swap" rel="stylesheet" />
+    
     <link rel="stylesheet" href="./CSS/style.css" />
     <link rel="stylesheet" href="./CSS/switch.css" />
-    <link
-      href="https://fonts.cdnfonts.com/css/digital-7-mono"
-      rel="stylesheet"
-    />
-
-    <title>Cyber Terminal HUD v3.2</title>
+    
+    <title>Modern Dashboard</title>
   </head>
   <body>
+    <!-- Live Video Background container -->
+    <div class="video-background-container">
+      <video id="bgVideoFrame" autoplay muted loop playsinline></video>
+    </div>
+
+    <!-- Abstract Ambient Background Orbs -->
+    <div class="bg-layer">
+      <div class="bg-orb orb-purple"></div>
+      <div class="bg-orb orb-blue"></div>
+      <div class="bg-orb orb-teal"></div>
+    </div>
+
+    <!-- Floating widgets layer (widgets move here when floating mode is on) -->
+    <div id="floatingWidgetsLayer" class="floating-widgets-layer" aria-hidden="true"></div>
+
+    <!-- MAIN WRAPPER -->
     <div class="main-layout">
-      <div class="left-sidebar">
-        <div class="widget">
-          <span class="sidebar-heading">MISSION PROTOCOLS</span>
-          <div class="todo-input-group">
-            <input
-              type="text"
-              id="todoInput"
-              placeholder="ADD TASK..."
-              autocomplete="off"
-            />
-            <button id="addTodoBtn">+</button>
+      
+      <!-- LEFT SIDEBAR -->
+      <aside class="sidebar left-sidebar" id="leftSidebar">
+        <!-- Tasks Widget -->
+        <div class="glass-panel widget-tasks modern-tasks" id="tasksWidget">
+          <div class="tasks-layout">
+            <div class="tasks-left">
+              <div class="tasks-header-row">
+                <div class="widget-header" id="tasksDropdownToggle" style="cursor: pointer; flex:1;">
+                  <h2>Tasks</h2>
+                  <svg id="tasksChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: 0.3s; transform: rotate(180deg); margin-left: 5px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <button id="openFullTasksBtn" class="icon-btn soft-btn" title="Open Full Task Board">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </button>
+              </div>
+              <div id="tasksDropdownContent" style="display: flex; flex-direction: column;">
+                <ul id="todoList" class="custom-scrollbar"></ul>
+              </div>
+              <div class="todo-input-group">
+                <button id="addTodoBtn" title="Add Task">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                  Add Task
+                </button>
+              </div>
+            </div>
+            
+            <div class="tasks-right">
+              <div class="progress-ring-container">
+                <svg class="progress-ring" width="90" height="90">
+                  <circle class="progress-ring__circle_bg" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="transparent" r="38" cx="45" cy="45"/>
+                  <circle class="progress-ring__circle" stroke="var(--primary-color)" stroke-width="6" fill="transparent" r="38" cx="45" cy="45" style="stroke-dasharray: 238.76; stroke-dashoffset: 238.76;"/>
+                </svg>
+                <div class="progress-text">
+                  <span id="taskPercent">0%</span>
+                  <span id="taskCount">0/0</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <ul id="todoList"></ul>
         </div>
 
-        <!-- <div class="widget" style="border-left-color: var(--neon-purple)">
-          <span class="sidebar-heading" style="color: var(--neon-purple)"
-            >ENCRYPTED_NOTES</span
-          >
-          <textarea id="quickNotes" placeholder="ENTER_DATA_LOG..."></textarea>
-        </div> -->
-        <div class="duaBox">
+        <!-- Quick Notes Widget -->
+        <div class="glass-panel widget-notes">
+          <div class="widget-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <h2>Quick Notes</h2>
+          </div>
+          <textarea id="quickNotes" class="notes-area custom-scrollbar" placeholder="Jot down something..."></textarea>
+        </div>
+
+        <!-- Tasbeeh Counter -->
+        <div class="glass-panel widget-tasbeeh">
+          <div class="widget-header" style="justify-content: space-between;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              <h2>Tasbeeh / Zikr</h2>
+            </div>
+            <button id="tasbeehReset" class="icon-btn soft-btn" title="Reset"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+          </div>
+          <div class="tasbeeh-body">
+            <div class="tasbeeh-display" id="tasbeehCount">0</div>
+            <button id="tasbeehBtn" class="tasbeeh-main-btn">TAP</button>
+          </div>
+        </div>
+
+        <!-- Salah Daily Tracker -->
+        <div class="glass-panel widget-salah">
+          <div class="widget-header" style="justify-content: space-between;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color:var(--text-muted);"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <h2>Salah Tracker</h2>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button id="openSalahPanelBtn" class="icon-btn soft-btn" title="Open Full Salah Panel" style="width:26px;height:26px;border-radius:8px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              </button>
+              <button id="salahResetBtn" class="soft-btn" title="Reset today" style="width:26px;height:26px;border-radius:8px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Prayer Heatmap -->
+          <div class="salah-heatmap-wrap">
+            <div class="salah-heatmap-labels">
+              <span>Fajr</span>
+              <span>Dhuhr</span>
+              <span>Asr</span>
+              <span>Maghrib</span>
+              <span>Isha</span>
+            </div>
+            <div class="salah-heatmap-grid" id="salahHeatmapGrid"></div>
+          </div>
+
+          <!-- Today's ticks -->
+          <div class="salah-today-label">Today</div>
+          <div class="salah-checklist" id="salahChecklist">
+            <div class="salah-item" data-prayer="Fajr">
+              <span class="salah-name">Fajr</span>
+              <button class="salah-check-btn" id="salah-Fajr" aria-label="Mark Fajr done">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+            <div class="salah-item" data-prayer="Dhuhr">
+              <span class="salah-name">Dhuhr</span>
+              <button class="salah-check-btn" id="salah-Dhuhr" aria-label="Mark Dhuhr done">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+            <div class="salah-item" data-prayer="Asr">
+              <span class="salah-name">Asr</span>
+              <button class="salah-check-btn" id="salah-Asr" aria-label="Mark Asr done">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+            <div class="salah-item" data-prayer="Maghrib">
+              <span class="salah-name">Maghrib</span>
+              <button class="salah-check-btn" id="salah-Maghrib" aria-label="Mark Maghrib done">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+            <div class="salah-item" data-prayer="Isha">
+              <span class="salah-name">Isha</span>
+              <button class="salah-check-btn" id="salah-Isha" aria-label="Mark Isha done">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="salah-reset-row">
+            <div class="salah-heatmap-legend">
+              <span style="font-size:0.65rem;color:var(--text-muted);">Less</span>
+              <div class="salah-legend-cell" style="opacity:0.15;"></div>
+              <div class="salah-legend-cell" style="opacity:0.35;"></div>
+              <div class="salah-legend-cell" style="opacity:0.6;"></div>
+              <div class="salah-legend-cell" style="opacity:0.8;"></div>
+              <div class="salah-legend-cell" style="opacity:1;"></div>
+              <span style="font-size:0.65rem;color:var(--text-muted);">More</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dua Widget -->
+        <div class="glass-panel widget-dua duaBox">
           <div id="nextPrevDua">
-            <div id="prev"><span class="arrow">←</span> PREV</div>
-            <div id="duaNUM">
-              <h2>
-                <span id="currentDUA">2</span>/<span id="totalDua">4</span>
-              </h2>
+            <button id="prev" class="icon-btn soft-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div id="duaNUM" class="badge">
+              <span id="currentDUA">1</span> / <span id="totalDua">10</span>
             </div>
-            <div id="next">NEXT <span class="arrow">→</span></div>
+            <button id="next" class="icon-btn soft-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
           </div>
-          <h3>Dua</h3>
-          <div id="dua">Loading dua...</div>
-          <h3>Transcription</h3>
-          <div id="transcription">Loading transcription...</div>
-          <h3>Meaning</h3>
-          <div id="meaning">Loading meaning in urdu (Roman)...</div>
+          <h3 class="section-title">Daily Reflection</h3>
+          <div id="dua" class="arabic-text">Loading...</div>
+          <div class="translation-wrapper">
+             <div id="transcription" class="transcription-text">Loading...</div>
+             <div class="divider"></div>
+             <div id="meaning" class="meaning-text">Loading...</div>
+          </div>
         </div>
-      </div>
+      </aside>
 
-      <div class="center-container">
-        <div class="center-text" id="motivQuote">Dream. Build. Conquer.</div>
+      <!-- CENTER CONTENT -->
+      <main class="center-container">
+        <div class="center-header">
+          <h1 class="hero-title" id="motivQuote">Dream. Build. Conquer.</h1>
+        </div>
 
-        <div class="searchEngines">
-          <div class="save-setting">
-            <div class="switch-wrapper">
-              <input
-                class="tgl tgl-skewed"
-                id="switch-on-off"
-                type="checkbox"
-              />
-              <label
-                class="tgl-btn"
-                data-tg-off="!Save"
-                data-tg-on="Save"
-                for="switch-on-off"
-              ></label>
+        <!-- Search Area -->
+        <div class="search-section">
+          <div class="searchEngines">
+            <div class="save-setting" title="Remember my choice">
+              <div class="switch-wrapper">
+                <input class="tgl tgl-flat" id="switch-on-off" type="checkbox" />
+                <label class="tgl-btn" for="switch-on-off"></label>
+              </div>
+            </div>
+            <div class="engine-buttons">
+              <div id="DEF" class="engine active">Google</div>
+              <div id="GPT" class="engine">ChatGPT</div>
+              <div id="GEM" class="engine">Gemini</div>
+              <div id="CLAUDE" class="engine">Claude</div>
+              <div id="PERP" class="engine">Perplexity</div>
+              <div id="yt" class="engine">YouTube</div>
+              <div id="WKP" class="engine">Wiki</div>
+              <div id="MDN" class="engine">MDN</div>
             </div>
           </div>
-          <div id="GPT" class="engine">ChatGPT</div>
-          <div id="GEM" class="engine">Gemini</div>
-          <div id="CLAUDE" class="engine">Claude</div>
-          <div id="PERP" class="engine">Perplexity</div>
-          <div id="yt" class="engine">YouTube</div>
-          <div id="WKP" class="engine">Wikipedia</div>
-          <div id="MDN" class="engine">MDN Docs</div>
-          <div id="DEF" class="engine">Default</div>
-        </div>
 
-        <div class="search-wrapper">
-          <div class="search">
-            <input
-              id="searchBar"
-              placeholder="EXECUTE_SEARCH_COMMAND..."
-              autocomplete="off"
-            />
-          </div>
-          <div class="searchIcon" onclick="search()">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 28 28"
-              fill="none"
-              id="searchIconSvg"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <!-- <circle
-                cx="14"
-                cy="14"
-                r="11"
-                fill=""
-                opacity="0.35"
-              />
-              <circle cx="14" cy="14" r="10" fill="var(--icon-bg)" /> -->
-              <circle
-                cx="12"
-                cy="12"
-                r="4.5"
-                stroke=""
-                stroke-width="2"
-                fill="none"
-              />
-              <line
-                x1="15.5"
-                y1="15.5"
-                x2="19"
-                y2="19"
-                stroke=""
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </div>
-          <div id="suggestionsBox"></div>
-        </div>
-
-        <div class="shortcuts">
-          <div
-            class="shortcut chatgpt"
-            onclick="openSite('https://chat.openai.com')"
-          >
-            <img
-              src="https://i.ibb.co/8L2NpgCj/icons8-chatgpt-50.png"
-              alt="ChatGPT"
-              id="chatgptImg"
-            />
-            <span id="chatgptText">CHATGPT</span>
-          </div>
-
-          <div class="shortcut claude" onclick="openSite('https://claude.ai')">
-            <img
-              src="https://i.ibb.co/CKymL1Wv/icons8-claude-48.png"
-              alt="Claude AI"
-            />
-            <span id="claudeText">CLAUDE AI</span>
-          </div>
-
-          <div
-            class="shortcut gemini"
-            onclick="openSite('https://gemini.google.com')"
-          >
-            <img
-              src="https://i.ibb.co/bjFT9QRV/icons8-gemini-ai-48.png"
-              alt="Gemini"
-            />
-            <span id="geminiText">GEMINI</span>
-          </div>
-
-          <div
-            class="shortcut notebooklm"
-            onclick="openSite('https://notebooklm.google.com')"
-          >
-            <img
-              src="https://i.ibb.co/3y8KPmCd/notebooklm-icon.png"
-              alt="NotebookLM"
-            />
-            <span id="notebooklmText">NOTEBOOKLM</span>
-          </div>
-
-          <div
-            class="shortcut google"
-            onclick="openSite('https://www.google.com')"
-          >
-            <img
-              src="https://i.ibb.co/mVBMXyqr/icons8-google-48.png"
-              alt="Google"
-            />
-            <span id="googleText">GOOGLE</span>
-          </div>
-
-          <div
-            class="shortcut gfg"
-            onclick="openSite('https://www.geeksforgeeks.org')"
-          >
-            <img src="https://i.ibb.co/s9f8MrYJ/gfg-favicon.png" alt="GFG" />
-            <span id="gfgText">GFG</span>
-          </div>
-
-          <div
-            class="shortcut youtube"
-            onclick="openSite('https://www.youtube.com')"
-          >
-            <img
-              src="https://i.ibb.co/hR0btBW7/icons8-youtube-48.png"
-              alt="YouTube"
-            />
-            <span id="youtubeText">YOUTUBE</span>
-          </div>
-
-          <div
-            class="shortcut w3schools"
-            onclick="openSite('https://www.w3schools.com/')"
-          >
-            <img
-              src="https://i.ibb.co/rKwYYYZ7/w3schools-logo-icon.png"
-              alt="W3Schools"
-            />
-            <span id="w3schoolsText">W3SCHOOLS</span>
-          </div>
-
-          <div
-            class="shortcut figma"
-            onclick="openSite('https://www.figma.com')"
-          >
-            <img
-              src="https://i.ibb.co/CsWt942s/icons8-figma-48.png"
-              alt="Figma"
-            />
-            <span id="figmaText">FIGMA</span>
-          </div>
-
-          <div
-            class="shortcut dribbble"
-            onclick="openSite('https://dribbble.com/')"
-          >
-            <img src="https://i.ibb.co/tP8358HN/dribbble.png" alt="Dribbble" />
-            <span id="dribbbleText">DRIBBBLE</span>
-          </div>
-
-          <div
-            class="shortcut behance"
-            onclick="openSite('https://behance.net/')"
-          >
-            <img
-              src="https://i.ibb.co/dsGZZcPk/icons8-behance-48.png"
-              alt="Behance"
-            />
-            <span id="behanceText">BEHANCE</span>
-          </div>
-
-          <div
-            class="shortcut mobbin"
-            onclick="openSite('https://mobbin.com/')"
-          >
-            <img src="https://i.ibb.co/5g6xS8SK/mobbin-icon.png" alt="Mobbin" />
-            <span id="mobbinText">MOBBIN</span>
-          </div>
-
-          <div class="shortcut github" onclick="openSite('https://github.com')">
-            <img src="https://i.ibb.co/8LWZWvq5/github.png" alt="GitHub" />
-            <span id="githubText">GITHUB</span>
-          </div>
-
-          <div
-            class="shortcut leetcode"
-            onclick="openSite('https://leetcode.com/')"
-          >
-            <img
-              src="https://i.ibb.co/pvTY0Lrt/icons8-leetcode-24.png"
-              alt="LeetCode"
-            />
-            <span id="leetcodeText">LEETCODE</span>
-          </div>
-
-          <div
-            class="shortcut replit"
-            onclick="openSite('https://replit.com/')"
-          >
-            <img
-              src="https://i.ibb.co/S77YmK81/icons8-replit-48.png"
-              alt="Replit"
-            />
-            <span id="replitText">REPLIT</span>
-          </div>
-
-          <div
-            class="shortcut mdn"
-            onclick="openSite('https://developer.mozilla.org')"
-          >
-            <img src="https://i.ibb.co/1fntyTBY/favicon.png" alt="MDN" />
-            <span id="mdnText">MDN DOC</span>
-          </div>
-
-          <div
-            class="shortcut linkedin"
-            onclick="openSite('https://www.linkedin.com')"
-          >
-            <img src="https://i.ibb.co/cSxZxKQ1/linkedin.png" alt="LinkedIn" />
-            <span id="linkedinText">LINKEDIN</span>
-          </div>
-
-          <div
-            class="shortcut instagram"
-            onclick="openSite('https://www.instagram.com')"
-          >
-            <img
-              src="https://i.ibb.co/BHV1ZMhH/Icon-for-the-instagram.png"
-              alt="Instagram"
-            />
-            <span id="instagramText">INSTAGRAM</span>
-          </div>
-
-          <div
-            class="shortcut reddit"
-            onclick="openSite('https://mail.google.com/')"
-          >
-            <img src="https://i.ibb.co/VYPLZfsR/gmail.png" alt="Reddit" />
-            <span id="redditText">Gmail</span>
-          </div>
-
-          <div class="shortcut x" onclick="openSite('https://www.x.com')">
-            <img src="https://i.ibb.co/C3gsCdvB/icons8-x-50.png" alt="X" />
-            <span id="xText">X</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="right-sidebar">
-        <div class="widget">
-          <div class="clock-block">
-            <div id="clockTime">00:00:00</div>
-            <div id="clockDate">LOADING_SYSTEM_DATE...</div>
-          </div>
-        </div>
-
-        <div class="widget" id="weather">
-          <span id="heading">ENV_ATMOSPHERE</span><br />
-          <span id="description" style="color: #fff; text-transform: uppercase"
-            >SCANNING...</span
-          ><br />
-          <span id="city" style="opacity: 0.8">---</span>
-          <div id="Temprature">--</div>
-          <div
-            id="windSpeed"
-            style="font-size: 0.8rem; color: var(--neon-blue)"
-          >
-            VELOCITY: --
-          </div>
-        </div>
-
-        <div class="widget">
-          <div class="status-line">
-            <div class="blink-dot"></div>
-            <span>STATUS: ONLINE</span>
-          </div>
-        </div>
-
-        <div
-          class="widget"
-          style="border-right-color: var(--neon-purple); font-style: italic"
-        >
-          “A slow, imperfect prayer with humility is better than a fast, perfect
-          prayer without presence.”
-        </div>
-        <div class="widget" id="stopwatchWidget">
-          <span class="sidebar-heading" style="color: var(--neon-blue)"
-            >STOPWATCH</span
-          >
-
-          <div class="stopwatch-display">
-            <div class="spinner-ring">
-              <div class="spinner-hand"></div>
+          <div class="search-wrapper glass-panel">
+            <div class="search-input-container">
+              <svg class="search-icon-left" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input id="searchBar" placeholder="Search the web or ask AI..." autocomplete="off" />
+              <button class="search-btn-action" onclick="search()" aria-label="Search">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
             </div>
-            <div id="stopwatchTime">00:00:00</div>
+            <div id="suggestionsBox" class="suggestions-box"></div>
+          </div>
+        </div>
+
+        <!-- SaaS Category Navigation -->
+        <nav class="category-nav">
+          <!-- AI Group -->
+          <div class="nav-group">
+            <button class="nav-trigger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              AI Tools
+            </button>
+            <div class="nav-dropdown">
+              <a href="https://chat.openai.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/8L2NpgCj/icons8-chatgpt-50.png" class="invert-dark" alt="ChatGPT"/><span>ChatGPT</span></a>
+              <a href="https://claude.ai" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/CKymL1Wv/icons8-claude-48.png" alt="Claude"/><span>Claude</span></a>
+              <a href="https://gemini.google.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/bjFT9QRV/icons8-gemini-ai-48.png" alt="Gemini"/><span>Gemini</span></a>
+              <a href="https://notebooklm.google.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/3y8KPmCd/notebooklm-icon.png" class="invert-dark" alt="NotebookLM"/><span>NotebookLM</span></a>
+            </div>
           </div>
 
-          <div class="stopwatch-controls">
-            <button id="swStart">START</button>
+          <!-- Dev Group -->
+          <div class="nav-group">
+            <button class="nav-trigger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+              Developer
+            </button>
+            <div class="nav-dropdown">
+              <a href="https://github.com" class="dropdown-item" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="invert-dark" alt="GitHub"/><span>GitHub</span></a>
+              <a href="https://developer.mozilla.org" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/1fntyTBY/favicon.png" alt="MDN"/><span>MDN Docs</span></a>
+              <a href="https://leetcode.com/" class="dropdown-item" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png" class="invert-dark" alt="LeetCode"/><span>LeetCode</span></a>
+              <a href="https://www.geeksforgeeks.org" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/s9f8MrYJ/gfg-favicon.png" alt="GFG"/><span>GeeksforGeeks</span></a>
+            </div>
+          </div>
 
-            <button id="swReset">RESET</button>
+          <!-- Design Group -->
+          <div class="nav-group">
+            <button class="nav-trigger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+              Design
+            </button>
+            <div class="nav-dropdown">
+              <a href="https://www.figma.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/CsWt942s/icons8-figma-48.png" alt="Figma"/><span>Figma</span></a>
+              <a href="https://dribbble.com/" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/tP8358HN/dribbble.png" alt="Dribbble"/><span>Dribbble</span></a>
+              <a href="https://behance.net/" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/dsGZZcPk/icons8-behance-48.png" alt="Behance"/><span>Behance</span></a>
+              <a href="https://mobbin.com/" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/5g6xS8SK/mobbin-icon.png" class="invert-dark" alt="Mobbin"/><span>Mobbin</span></a>
+            </div>
+          </div>
+
+          <!-- Social Group -->
+          <div class="nav-group">
+            <button class="nav-trigger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              Social
+            </button>
+            <div class="nav-dropdown">
+              <a href="https://www.youtube.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/hR0btBW7/icons8-youtube-48.png" alt="YouTube"/><span>YouTube</span></a>
+              <a href="https://www.linkedin.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/cSxZxKQ1/linkedin.png" alt="LinkedIn"/><span>LinkedIn</span></a>
+              <a href="https://www.x.com" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/C3gsCdvB/icons8-x-50.png" class="invert-dark" alt="X.com"/><span>X.com</span></a>
+              <a href="https://mail.google.com/" class="dropdown-item" target="_blank"><img src="https://i.ibb.co/VYPLZfsR/gmail.png" alt="Gmail"/><span>Gmail</span></a>
+            </div>
+          </div>
+        </nav>
+
+        <!-- Center Widgets Overflow Area -->
+        <div id="centerSidebar" class="sidebar center-widgets-grid"></div>
+
+      </main>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside class="sidebar right-sidebar" id="rightSidebar">
+        
+        <!-- Clock -->
+        <div class="glass-panel widget-clock" id="clockWidgetContainer">
+          <div id="clockTime" class="time-display">00:00</div>
+          <div class="date-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span id="clockDate">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Prayer Times Widget -->
+        <div class="glass-panel widget-prayer">
+          <div class="widget-header" style="justify-content: space-between;">
+            <h2>Next prayer</h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </div>
+          <div class="prayer-countdown">
+            <span id="prayerCountdownTime">-- : -- : --</span>
+          </div>
+          <div class="prayer-timeline">
+            <div class="timeline-track">
+              <div class="timeline-progress" id="prayerProgress"></div>
+            </div>
+            <div class="timeline-nodes">
+              <div class="t-node" id="node-Fajr"><span class="p-name">Fajr</span><div class="dot"></div><span class="p-time" id="time-Fajr">--:--</span></div>
+              <div class="t-node" id="node-Dohr"><span class="p-name">Dohr</span><div class="dot"></div><span class="p-time" id="time-Dohr">--:--</span></div>
+              <div class="t-node" id="node-Asr"><span class="p-name">Asr</span><div class="dot"></div><span class="p-time" id="time-Asr">--:--</span></div>
+              <div class="t-node" id="node-Maghrib"><span class="p-name">Maghrib</span><div class="dot"></div><span class="p-time" id="time-Maghrib">--:--</span></div>
+              <div class="t-node" id="node-Isha"><span class="p-name">Isha</span><div class="dot"></div><span class="p-time" id="time-Isha">--:--</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather -->
+        <div class="glass-panel widget-weather" id="weather">
+          <div class="weather-top">
+            <div class="weather-location">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span id="city">Searching...</span>
+            </div>
+            <div class="status-pulse"></div>
+          </div>
+          <div class="weather-main">
+            <h2 id="Temprature">--°</h2>
+            <div class="weather-details">
+              <span id="description">--</span>
+              <span id="windSpeed">Wind: --</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quote -->
+        <div class="glass-panel widget-quote">
+          <svg class="quote-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/></svg>
+          <p>"A slow, imperfect prayer with humility is better than a fast, perfect prayer without presence."</p>
+        </div>
+
+        <!-- Stopwatch -->
+        <div class="glass-panel widget-stopwatch" id="stopwatchWidget">
+          <div class="widget-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <h3 class="widget-title">Focus Session</h3>
+          </div>
+          <div class="timer-display-modern">
+            <div class="spinner-ring"></div>
+            <div id="stopwatchTime" class="time-readout">00:00:00</div>
+          </div>
+          <div class="timer-actions">
+            <button id="swStart" class="btn btn-primary">Start</button>
+            <button id="swReset" class="btn btn-ghost">Reset</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Floating Settings Button -->
+    <button id="openSettingsBtn" class="floating-settings-btn" title="Settings">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Dashboard Settings</h2>
+          <button id="closeSettingsBtn" class="icon-btn soft-btn" title="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <!-- Settings Tabs -->
+        <div class="settings-tabs">
+          <button class="tab-btn active" data-target="tab-themes">Themes &amp; Colors</button>
+          <button class="tab-btn" data-target="tab-static">Static Photos</button>
+          <button class="tab-btn" data-target="tab-live">Live Videos</button>
+          <button class="tab-btn" data-target="tab-prayers">Prayer Times</button>
+          <button class="tab-btn" data-target="tab-widgets">Widgets</button>
+          <button class="tab-btn" data-target="tab-dailytasks">Daily Tasks</button>
+        </div>
+
+        <div class="modal-body custom-scrollbar">
+          <!-- TAB: THEMES -->
+          <div id="tab-themes" class="tab-content active">
+            <div class="settings-section">
+              <h3>Accent Color</h3>
+              <div class="theme-options">
+                <div class="themeOpt active" data-theme="#6366f1" style="background:#6366f1"></div>
+                <div class="themeOpt" data-theme="#10b981" style="background:#10b981"></div>
+                <div class="themeOpt" data-theme="#f43f5e" style="background:#f43f5e"></div>
+                <div class="themeOpt" data-theme="#06b6d4" style="background:#06b6d4"></div>
+                <div class="themeOpt" data-theme="#a855f7" style="background:#a855f7"></div>
+                <div class="themeOpt" data-theme="#f59e0b" style="background:#f59e0b"></div>
+              </div>
+            </div>
+            
+            <div class="settings-section">
+              <h3>Solid Background Colors</h3>
+              <div class="staticOptCont solidColorsCont">
+                <div class="staticOpt active" data-bg-type="color" data-val="#07090e" style="background:#07090e">
+                  <span class="opt-label">Default Dark</span>
+                </div>
+                <div class="staticOpt" data-bg-type="color" data-val="#0f172a" style="background:#0f172a">
+                  <span class="opt-label">Deep Slate</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: STATIC WALLPAPERS -->
+          <div id="tab-static" class="tab-content" style="display: none;">
+            <div class="settings-section">
+              <h3>High-Quality Photos</h3>
+              <div class="staticOptCont imageWallpapersCont"></div>
+            </div>
+          </div>
+
+          <!-- TAB: LIVE VIDEOS -->
+          <div id="tab-live" class="tab-content" style="display: none;">
+            <div class="settings-section">
+              <h3>Animated Video Loops</h3>
+              <div class="videoOptCont liveWallpapersCont"></div>
+            </div>
+          </div>
+
+          <!-- TAB: WIDGETS -->
+          <div id="tab-widgets" class="tab-content" style="display: none;">
+            <div class="settings-section">
+              <h3>Widget layout</h3>
+              <div class="widget-toggles">
+                <div class="widget-toggle-row">
+                  <span>Floating widgets <span style="font-size:0.75rem;color:var(--text-muted);">(drag anywhere)</span></span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat" id="toggleFloatingWidgets" type="checkbox" />
+                    <label class="tgl-btn" for="toggleFloatingWidgets"></label>
+                  </div>
+                </div>
+              </div>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin:8px 0 12px;">Fixed layout keeps widgets in the side columns and center grid. Floating lets you drag each panel anywhere on the screen.</p>
+              <button type="button" id="resetWidgetPositionsBtn" class="btn btn-ghost" style="width:100%;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Reset widget positions
+              </button>
+            </div>
+            <div class="settings-section">
+              <h3>Left Sidebar Widgets</h3>
+              <div class="widget-toggles">
+                <div class="widget-toggle-row">
+                  <span>My Tasks</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-tasks" type="checkbox" data-widget=".widget-tasks" />
+                    <label class="tgl-btn" for="toggle-tasks"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Quick Notes</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-notes" type="checkbox" data-widget=".widget-notes" />
+                    <label class="tgl-btn" for="toggle-notes"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Tasbeeh / Zikr</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-tasbeeh" type="checkbox" data-widget=".widget-tasbeeh" />
+                    <label class="tgl-btn" for="toggle-tasbeeh"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Salah Tracker</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-salah" type="checkbox" data-widget=".widget-salah" />
+                    <label class="tgl-btn" for="toggle-salah"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Daily Reflection</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-dua" type="checkbox" data-widget=".widget-dua" />
+                    <label class="tgl-btn" for="toggle-dua"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3>Right Sidebar Widgets</h3>
+              <div class="widget-toggles">
+                <div class="widget-toggle-row">
+                  <span>Clock</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-clock" type="checkbox" data-widget=".widget-clock" />
+                    <label class="tgl-btn" for="toggle-clock"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Prayer Times Tracker</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-prayer" type="checkbox" data-widget=".widget-prayer" />
+                    <label class="tgl-btn" for="toggle-prayer"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Weather</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-weather" type="checkbox" data-widget=".widget-weather" />
+                    <label class="tgl-btn" for="toggle-weather"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Quote</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-quote" type="checkbox" data-widget=".widget-quote" />
+                    <label class="tgl-btn" for="toggle-quote"></label>
+                  </div>
+                </div>
+                <div class="widget-toggle-row">
+                  <span>Stopwatch</span>
+                  <div class="switch-wrapper">
+                    <input class="tgl tgl-flat widget-toggle" id="toggle-stopwatch" type="checkbox" data-widget=".widget-stopwatch" />
+                    <label class="tgl-btn" for="toggle-stopwatch"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: PRAYERS -->
+          <div id="tab-prayers" class="tab-content" style="display: none;">
+            <div class="settings-section">
+              <h3>Configure Prayer Times (HH:MM 24hr)</h3>
+              <div class="prayer-inputs">
+                <style>
+                  .p-input-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 12px; margin-bottom: 8px; border-radius: 8px;}
+                  .p-input-row input { background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); color: white; padding: 6px 10px; border-radius: 6px; outline: none;}
+                  .p-input-row input:focus { border-color: var(--primary-color);}
+                </style>
+                <div class="p-input-row"><span>Fajr</span> <input type="time" id="setFajr" class="prayer-input"></div>
+                <div class="p-input-row"><span>Dohr</span> <input type="time" id="setDohr" class="prayer-input"></div>
+                <div class="p-input-row"><span>Asr</span> <input type="time" id="setAsr" class="prayer-input"></div>
+                <div class="p-input-row"><span>Maghrib</span> <input type="time" id="setMaghrib" class="prayer-input"></div>
+                <div class="p-input-row"><span>Isha</span> <input type="time" id="setIsha" class="prayer-input"></div>
+                <button id="savePrayersBtn" class="btn btn-primary" style="margin-top: 10px; width: 100%;">Save Prayer Times</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: DAILY TASKS -->
+          <div id="tab-dailytasks" class="tab-content" style="display: none;">
+            <div class="settings-section">
+              <h3>My Default Daily Tasks</h3>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:14px;">These load automatically when your task list is empty or when you click <strong>Reset to Daily</strong>.</p>
+              <div id="dailyTaskEditList" class="daily-task-edit-list custom-scrollbar"></div>
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <input type="text" id="newDailyTaskInput" placeholder="Add default task..." style="flex:1;min-width:0;background:rgba(0,0,0,0.3);border:1px solid var(--border-light);color:#fff;padding:8px 12px;border-radius:10px;outline:none;font-family:var(--font-ui);font-size:0.9rem;" />
+                <button id="addDailyTaskBtn" class="btn btn-primary" style="padding:8px 16px;">Add</button>
+              </div>
+              <button id="saveDailyTasksBtn" class="btn btn-primary" style="width:100%;margin-top:12px;">Save My Daily List</button>
+              <button id="applyDailyTasksBtn" class="btn btn-ghost" style="width:100%;margin-top:8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.57"/></svg>
+                Reset Tasks to Daily Default
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    
+
+
+    <!-- ===================== ADD TASK MODAL ===================== -->
+    <div id="taskModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content task-modal-content">
+        <div class="modal-header">
+          <div class="task-modal-title-row">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <h2>New Task</h2>
+          </div>
+          <button id="closeTaskModalBtn" class="icon-btn soft-btn" title="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="task-modal-body">
+          <!-- Title -->
+          <div class="task-field">
+            <label for="taskTitleInput">Title <span class="req">*</span></label>
+            <input type="text" id="taskTitleInput" placeholder="What needs to be done?" autocomplete="off" />
+          </div>
+          <!-- Description -->
+          <div class="task-field">
+            <label for="taskDescInput">Description</label>
+            <textarea id="taskDescInput" placeholder="Add details, notes, or context..." rows="3"></textarea>
+          </div>
+          <!-- Time Row -->
+          <div class="task-time-row">
+            <div class="task-field task-field--half">
+              <label>Start Time</label>
+              <div class="task-time-display" id="taskStartTimeDisplay">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="taskStartTimeValue">--:--</span>
+                <span class="task-time-auto-badge">AUTO</span>
+              </div>
+            </div>
+            <div class="task-field task-field--half">
+              <label for="taskEndTimeInput">End Time</label>
+              <div class="task-time-display task-time-display--input">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <input type="time" id="taskEndTimeInput" class="task-time-input" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="task-modal-footer">
+          <button id="cancelTaskBtn" class="btn btn-ghost">Cancel</button>
+          <button id="saveTaskBtn" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add Task
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== TASK VIEW PANEL ===================== -->
+    <div id="taskViewPanel" class="task-view-panel">
+      <div class="tvp-header">
+        <div class="tvp-status-badge" id="tvpStatusBadge">In Progress</div>
+        <button id="closeTaskViewBtn" class="icon-btn soft-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="tvp-body">
+        <h1 class="tvp-title" id="tvpTitle">Task Title</h1>
+        <div class="tvp-time-row" id="tvpTimeRow">
+          <div class="tvp-time-chip">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="tvpStart"></span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <div class="tvp-time-chip">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="tvpEnd"></span>
+          </div>
+        </div>
+        <div class="tvp-section-label">Description</div>
+        <p class="tvp-desc" id="tvpDesc">No description provided.</p>
+        <div class="tvp-divider"></div>
+        <div class="tvp-actions">
+          <button id="tvpToggleComplete" class="btn btn-primary tvp-complete-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Mark Complete
+          </button>
+          <button id="tvpDeleteBtn" class="btn btn-rose">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="taskViewBackdrop" class="task-view-backdrop"></div>
+
+    <!-- ===================== FULL TASK PANEL ===================== -->
+    <div id="fullTaskPanel" class="ftp-overlay">
+      <div class="ftp-container">
+
+        <!-- Header -->
+        <div class="ftp-header">
+          <div class="ftp-header-left">
+            <div class="ftp-logo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div>
+              <h1 class="ftp-title">My Task Board</h1>
+              <p class="ftp-subtitle" id="ftpSubtitle">Loading...</p>
+            </div>
+          </div>
+          <div class="ftp-header-right">
+            <button id="ftpAddBtn" class="btn btn-primary ftp-add-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              New Task
+            </button>
+            <button id="ftpResetBtn" class="btn btn-ghost" title="Reset to daily defaults">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.57"/></svg>
+              Daily Reset
+            </button>
+            <button id="closeFullTasksBtn" class="icon-btn soft-btn" title="Close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="ftp-filters">
+          <button class="ftp-filter-btn active" data-filter="all">All</button>
+          <button class="ftp-filter-btn" data-filter="pending">In Progress</button>
+          <button class="ftp-filter-btn" data-filter="completed">Completed</button>
+          <div class="ftp-filter-sep"></div>
+          <div class="ftp-search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="ftpSearchInput" placeholder="Search tasks..." />
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="ftp-progress-row">
+          <div class="ftp-progress-bar-wrap">
+            <div class="ftp-progress-fill" id="ftpProgressFill"></div>
+          </div>
+          <span class="ftp-progress-label" id="ftpProgressLabel">0 / 0 complete</span>
+        </div>
+
+        <!-- Task List Body -->
+        <div class="ftp-body custom-scrollbar" id="ftpTaskList"></div>
+
+        <!-- Empty State -->
+        <div class="ftp-empty" id="ftpEmpty" style="display:none;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg>
+          <p>No tasks here.<br><span>Use "New Task" to add one!</span></p>
+        </div>
+
+      </div>
+    </div>
+    <div id="fullTaskBackdrop" class="ftp-backdrop"></div>
+
+
+    <!-- ===================== SALAH DEDICATED PANEL ===================== -->
+    <div id="salahPanel" class="salah-panel">
+      <div class="salah-panel-header">
+        <div class="salah-panel-title-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color:var(--primary-hover);">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <h2 class="salah-panel-title">Daily Salah</h2>
+          <span id="salahPanelDate" class="salah-panel-date"></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="salahPanelResetBtn" class="soft-btn" title="Reset today" style="width:28px;height:28px;border-radius:8px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+          <button id="closeSalahPanelBtn" class="soft-btn" title="Close" style="width:28px;height:28px;border-radius:8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Today's Prayer Checkboxes (large) -->
+      <div class="salah-panel-checks" id="salahPanelChecklist">
+        <div class="salah-panel-item" data-prayer="Fajr">
+          <div class="salah-panel-check-btn" id="spc-Fajr">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="salah-panel-name">Fajr</span>
+          <span class="salah-panel-time">Dawn</span>
+        </div>
+        <div class="salah-panel-item" data-prayer="Dhuhr">
+          <div class="salah-panel-check-btn" id="spc-Dhuhr">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="salah-panel-name">Dhuhr</span>
+          <span class="salah-panel-time">Midday</span>
+        </div>
+        <div class="salah-panel-item" data-prayer="Asr">
+          <div class="salah-panel-check-btn" id="spc-Asr">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="salah-panel-name">Asr</span>
+          <span class="salah-panel-time">Afternoon</span>
+        </div>
+        <div class="salah-panel-item" data-prayer="Maghrib">
+          <div class="salah-panel-check-btn" id="spc-Maghrib">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="salah-panel-name">Maghrib</span>
+          <span class="salah-panel-time">Dusk</span>
+        </div>
+        <div class="salah-panel-item" data-prayer="Isha">
+          <div class="salah-panel-check-btn" id="spc-Isha">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="salah-panel-name">Isha</span>
+          <span class="salah-panel-time">Night</span>
+        </div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="salah-panel-heatmap-section">
+        <div class="salah-panel-section-label">Prayer History (Last 28 Days)</div>
+        <div class="salah-panel-heatmap-wrap">
+          <div class="salah-panel-heatmap-labels">
+            <span>Fajr</span><span>Dhuhr</span><span>Asr</span><span>Maghrib</span><span>Isha</span>
+          </div>
+          <div class="salah-panel-heatmap-grid" id="salahPanelGrid"></div>
+        </div>
+        <div class="salah-heatmap-legend" style="justify-content:flex-end;margin-top:6px;">
+          <span style="font-size:0.65rem;color:var(--text-muted);">Less</span>
+          <div class="salah-legend-cell" style="opacity:0.12;"></div>
+          <div class="salah-legend-cell" style="opacity:0.35;"></div>
+          <div class="salah-legend-cell" style="opacity:0.6;"></div>
+          <div class="salah-legend-cell" style="opacity:0.8;"></div>
+          <div class="salah-legend-cell" style="opacity:1;"></div>
+          <span style="font-size:0.65rem;color:var(--text-muted);">More</span>
+        </div>
+      </div>
+    </div>
+    <div id="salahPanelBackdrop" class="salah-panel-backdrop"></div>
+
     <script src="./js/script.js"></script>
   </body>
 </html>
