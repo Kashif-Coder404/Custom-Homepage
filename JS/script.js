@@ -126,10 +126,10 @@ searchBar.addEventListener("input", (e) => {
 
     const script = document.createElement("script");
     script.id = "jsonp-suggestion-script";
-    // We use the Bing API because Google's JSONP endpoints are frequently blocked by adblockers and strict browser CORB policies
-    script.src = `https://api.bing.com/osjson.aspx?query=${encodeURIComponent(
-      q,
-    )}&JsonType=callback&JsonCallback=handleSuggestions`;
+    
+    // Use Google's suggest API with client=chrome for valid JSONP
+    script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(q)}&callback=handleSuggestions`;
+    
     document.body.appendChild(script);
     
     script.onload = () => {
