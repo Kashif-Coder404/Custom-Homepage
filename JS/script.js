@@ -83,7 +83,12 @@ saveToggle.addEventListener("change", () => {
 });
 
 window.handleSuggestions = function (data) {
-  const suggestions = data[1];
+  let suggestions = [];
+  if (data && Array.isArray(data[1])) {
+    // Extract suggestions: handle both flat string arrays and nested arrays
+    suggestions = data[1].map(item => Array.isArray(item) ? item[0] : item);
+  }
+  
   suggestionsBox.innerHTML = "";
   if (suggestions.length) {
     suggestionsBox.style.display = "flex";
@@ -110,9 +115,9 @@ searchBar.addEventListener("input", (e) => {
     return;
   }
   const script = document.createElement("script");
-  script.src = `https://suggestqueries.google.com/complete/search?client=chrome-omni&q=${encodeURIComponent(
+  script.src = `https://suggestqueries.google.com/complete/search?client=youtube&q=${encodeURIComponent(
     q,
-  )}&callback=handleSuggestions`;
+  )}&jsonp=handleSuggestions`;
   document.body.appendChild(script);
   script.onload = () => document.body.removeChild(script);
 });
