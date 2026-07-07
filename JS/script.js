@@ -89,7 +89,7 @@ window.handleSuggestions = function (data) {
   if (Array.isArray(data) && data.length > 0 && data[0].phrase) {
     suggestions = data.map(item => item.phrase);
   } 
-  // Fallback for standard OpenSearch formats (just in case)
+  // Google Suggest / OpenSearch formats
   else if (data && Array.isArray(data[1])) {
     suggestions = data[1].map(item => Array.isArray(item) ? item[0] : item);
   }
@@ -132,8 +132,8 @@ searchBar.addEventListener("input", (e) => {
     const script = document.createElement("script");
     script.id = "jsonp-suggestion-script";
     
-    // DuckDuckGo's API is very friendly to custom web dashboards
-    script.src = `https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&callback=handleSuggestions`;
+    // Google Suggest API
+    script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(q)}&callback=handleSuggestions`;
     
     document.body.appendChild(script);
     
@@ -299,10 +299,14 @@ searchBar.addEventListener("input", () => {
 typePlaceholder();
 
 // Clock & Quotes
+const clockTimeEl = document.getElementById("clockTime");
+const clockDateEl = document.getElementById("clockDate");
+
 function updateClock() {
+  if (typeof activeWidgets !== "undefined" && !activeWidgets.includes(".widget-clock")) return;
   const now = new Date();
-  document.getElementById("clockTime").textContent = now.toLocaleTimeString();
-  document.getElementById("clockDate").textContent = now.toLocaleDateString(
+  if (clockTimeEl) clockTimeEl.textContent = now.toLocaleTimeString();
+  if (clockDateEl) clockDateEl.textContent = now.toLocaleDateString(
     "en-US",
     { weekday: "short", month: "short", day: "numeric" },
   );
@@ -320,7 +324,8 @@ const quotes = [
   "Believe Yourself",
 ];
 setInterval(() => {
-  motivText.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+  if (typeof activeWidgets !== "undefined" && !activeWidgets.includes(".widget-quote")) return;
+  if (motivText) motivText.textContent = quotes[Math.floor(Math.random() * quotes.length)];
 }, 10000);
 
 // =========================================================================
@@ -403,7 +408,21 @@ if (savePrayersBtn) {
   });
 }
 
+// Cache DOM elements for Prayer Tracker
+const prayerNodes = {
+  Fajr: document.getElementById("node-Fajr"),
+  Dohr: document.getElementById("node-Dohr"),
+  Asr: document.getElementById("node-Asr"),
+  Maghrib: document.getElementById("node-Maghrib"),
+  Isha: document.getElementById("node-Isha")
+};
+const countdownEl = document.getElementById("prayerCountdownTime");
+const widgetPrayer = document.querySelector(".widget-prayer");
+const prayerProgressEl = document.getElementById("prayerProgress");
+
 function updatePrayerTracker() {
+  if (typeof activeWidgets !== "undefined" && !activeWidgets.includes(".widget-prayer")) return;
+  
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const currentSecondsTotal = currentMinutes * 60 + now.getSeconds();
@@ -416,15 +435,21 @@ function updatePrayerTracker() {
     const parts = prayerTimes[p].split(":");
     const pSecsTotal = (parseInt(parts[0]) * 60 + parseInt(parts[1])) * 60;
 
-    const node = document.getElementById(`node-${p}`);
-    if (node) node.className = "t-node";
+    const node = prayerNodes[p];
+    
+    // Only update classes if they changed to avoid Layout Thrashing
+    let desiredClass = "t-node";
 
     if (pSecsTotal > currentSecondsTotal && !nextPrayer) {
       nextPrayer = p;
       nextPrayerSeconds = pSecsTotal;
-      if (node) node.classList.add("active");
+      desiredClass = "t-node active";
     } else if (pSecsTotal <= currentSecondsTotal) {
-      if (node) node.classList.add("passed");
+      desiredClass = "t-node passed";
+    }
+    
+    if (node && node.className !== desiredClass) {
+      node.className = desiredClass;
     }
   }
 
@@ -433,10 +458,9 @@ function updatePrayerTracker() {
     const parts = prayerTimes["Fajr"].split(":");
     nextPrayerSeconds =
       24 * 3600 + (parseInt(parts[0]) * 60 + parseInt(parts[1])) * 60;
-    const node = document.getElementById(`node-Fajr`);
-    if (node) {
-      node.classList.remove("passed");
-      node.classList.add("active");
+    const node = prayerNodes["Fajr"];
+    if (node && node.className !== "t-node active") {
+      node.className = "t-node active";
     }
   }
 
@@ -445,18 +469,16 @@ function updatePrayerTracker() {
   const m = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
   const s = String(diff % 60).padStart(2, "0");
 
-  const countdownEl = document.getElementById("prayerCountdownTime");
-  const widgetPrayer = document.querySelector(".widget-prayer");
-
   if (countdownEl) {
     countdownEl.innerText = `${h} : ${m} : ${s}`;
 
-    if (diff <= 1200 && diff > 0) {
-      countdownEl.classList.add("prayer-alert-text");
-      if (widgetPrayer) widgetPrayer.classList.add("prayer-alert-glow");
+    const isAlert = diff <= 1200 && diff > 0;
+    if (isAlert) {
+      if (!countdownEl.classList.contains("prayer-alert-text")) countdownEl.classList.add("prayer-alert-text");
+      if (widgetPrayer && !widgetPrayer.classList.contains("prayer-alert-glow")) widgetPrayer.classList.add("prayer-alert-glow");
     } else {
-      countdownEl.classList.remove("prayer-alert-text");
-      if (widgetPrayer) widgetPrayer.classList.remove("prayer-alert-glow");
+      if (countdownEl.classList.contains("prayer-alert-text")) countdownEl.classList.remove("prayer-alert-text");
+      if (widgetPrayer && widgetPrayer.classList.contains("prayer-alert-glow")) widgetPrayer.classList.remove("prayer-alert-glow");
     }
   }
 
@@ -477,8 +499,7 @@ function updatePrayerTracker() {
     pct = 100;
   }
 
-  const prog = document.getElementById("prayerProgress");
-  if (prog) prog.style.width = pct + "%";
+  if (prayerProgressEl) prayerProgressEl.style.width = pct + "%";
 }
 
 setInterval(updatePrayerTracker, 1000);
@@ -495,11 +516,15 @@ const spinnerRing = document.querySelector(".spinner-ring");
 const swStartBtn = document.getElementById("swStart");
 const swResetBtn = document.getElementById("swReset");
 
+const stopwatchTimeEl = document.getElementById("stopwatchTime");
+
 function updateStopwatchDisplay() {
+  if (typeof activeWidgets !== "undefined" && !activeWidgets.includes(".widget-stopwatch")) return;
+  
   const h = String(Math.floor(stopwatchSeconds / 3600)).padStart(2, "0");
   const m = String(Math.floor((stopwatchSeconds % 3600) / 60)).padStart(2, "0");
   const s = String(stopwatchSeconds % 60).padStart(2, "0");
-  document.getElementById("stopwatchTime").textContent = `${h}:${m}:${s}`;
+  if (stopwatchTimeEl) stopwatchTimeEl.textContent = `${h}:${m}:${s}`;
 }
 
 function updateStartButtonText() {
@@ -841,22 +866,51 @@ loadStopwatchState();
   });
 
   renderEditor();
-})();
-
 //Shortcuts
 
 function openSite(url) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
-// Weather
-const apikey = "dd35574ca84c015a1ec4acd1de4a5dd3";
-const city = "dehradun";
-const apiUrl = `https://api.openweathermap.org/data/2.5/weather?&units=metric&q=${city}&appid=${apikey}`;
 
+function getWeatherConfig() {
+  const lsKey = localStorage.getItem("dashboard_weather_api_key");
+  const lsCity = localStorage.getItem("dashboard_weather_city");
+  
+  const envObj = window.ENV || {};
+  return {
+    apikey: lsKey || envObj.WEATHER_API_KEY || "",
+    city: lsCity || envObj.WEATHER_DEFAULT_CITY || "London"
+  };
+}
+
+// Weather
 async function fetchWeather() {
   try {
+    const config = getWeatherConfig();
+    if (!config.apikey) {
+      const cityEl = document.getElementById("city");
+      if (cityEl) cityEl.innerText = "API Key Required";
+      const tempEl = document.getElementById("Temprature");
+      if (tempEl) tempEl.innerText = "--°";
+      return;
+    }
+    
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?&units=metric&q=${config.city}&appid=${config.apikey}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
+    
+    if (data.cod === "401") {
+      document.getElementById("city").innerText = "Invalid API Key";
+      document.getElementById("Temprature").innerText = "--°";
+      return;
+    }
+    
+    if (data.cod === "404") {
+      document.getElementById("city").innerText = "City Not Found";
+      document.getElementById("Temprature").innerText = "--°";
+      return;
+    }
+
     document.getElementById("city").innerText = data.name.toUpperCase();
     document.getElementById("description").innerText =
       data.weather[0].description.toUpperCase();
@@ -1432,6 +1486,28 @@ tabBtns.forEach((btn) => {
   });
 });
 
+// --- API SETTINGS LOGIC ---
+document.addEventListener("DOMContentLoaded", () => {
+  const weatherApiInput = document.getElementById("weatherApiInput");
+  const weatherCityInput = document.getElementById("weatherCityInput");
+  const saveApiSettingsBtn = document.getElementById("saveApiSettingsBtn");
+  
+  if (weatherApiInput && weatherCityInput) {
+    const config = getWeatherConfig();
+    weatherApiInput.value = localStorage.getItem("dashboard_weather_api_key") || config.apikey || "";
+    weatherCityInput.value = localStorage.getItem("dashboard_weather_city") || config.city || "";
+    
+    if (saveApiSettingsBtn) {
+      saveApiSettingsBtn.addEventListener("click", () => {
+        localStorage.setItem("dashboard_weather_api_key", weatherApiInput.value.trim());
+        localStorage.setItem("dashboard_weather_city", weatherCityInput.value.trim());
+        alert("API Settings saved!");
+        fetchWeather();
+      });
+    }
+  }
+});
+
 // --- THEME COLOR ---
 const themeOpts = document.querySelectorAll(".themeOpt");
 
@@ -1468,7 +1544,7 @@ Object.values(videos).forEach((url) => {
   video.src = `${url}#t=0.1`;
   video.muted = true;
   video.playsInline = true;
-  video.preload = "metadata";
+  video.preload = "none";
   div.appendChild(video);
   liveWallpapersCont.appendChild(div);
 });
@@ -1647,7 +1723,7 @@ function addUploadedVideoToUI(id, url) {
   video.src = `${url}#t=0.1`;
   video.muted = true;
   video.playsInline = true;
-  video.preload = "metadata";
+  video.preload = "none";
   div.appendChild(video);
   
   liveWallpapersCont.insertBefore(div, uploadVideoDiv);
@@ -1720,6 +1796,12 @@ function setVideoBackground(val) {
 
   const actualUrl = uploadedVideosMap[val] || val;
   bgVideoFrame.src = actualUrl;
+  
+  const playPromise = bgVideoFrame.play();
+  if (playPromise !== undefined) {
+    playPromise.catch((e) => console.log("Video autoplay prevented:", e));
+  }
+  
   localStorage.setItem("dashboard_bg_video", val);
 
   videoOpts.forEach((opt) => opt.classList.remove("active"));
@@ -1766,7 +1848,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedStaticRaw = localStorage.getItem("dashboard_bg_static");
 
   if (savedVideo) {
-    setVideoBackground(savedVideo);
+    setTimeout(() => {
+      setVideoBackground(savedVideo);
+    }, 3500);
   } else if (savedStaticRaw) {
     const savedStatic = JSON.parse(savedStaticRaw);
     setStaticBackground(savedStatic.type, savedStatic.val);
@@ -1819,7 +1903,7 @@ widgetToggles.forEach((toggle) => {
   if (el) allWidgetsMap[sel] = el;
 });
 
-let activeWidgets = [];
+var activeWidgets = [];
 const MAX_PER_COLUMN = 4;
 
 function isFloatingMode() {
@@ -2026,13 +2110,14 @@ function renderFixedLayout() {
   const leftBatch = [];
   const centerBatch = [];
 
-  const dynamicMax = Math.ceil(activeWidgets.length / 3);
-
-  activeWidgets.forEach((sel) => {
+  activeWidgets.forEach((sel, index) => {
     const w = allWidgetsMap[sel];
     if (!w) return;
-    if (leftBatch.length < dynamicMax) leftBatch.push(w);
-    else if (centerBatch.length < dynamicMax) centerBatch.push(w);
+    
+    // Distribute left -> center -> right (round robin)
+    const colIndex = index % 3;
+    if (colIndex === 0) leftBatch.push(w);
+    else if (colIndex === 1) centerBatch.push(w);
     else rightBatch.push(w);
   });
 
@@ -2070,17 +2155,7 @@ function loadWidgetSettings() {
       activeWidgets = [];
     }
   } else {
-    activeWidgets = [
-      ".widget-clock",
-      ".widget-prayer",
-      ".widget-weather",
-      ".widget-stopwatch",
-      ".widget-tasks",
-      ".widget-notes",
-      ".widget-tasbeeh",
-      ".widget-salah",
-      ".widget-dua",
-    ];
+    activeWidgets = [];
   }
   ensureWidgetCloseButtons();
   renderWidgetsLayout();
@@ -2527,3 +2602,29 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPanelHeatmap();
   });
 })();
+
+// --- SETTINGS: DANGEROUS TAB DB RESET ---
+document.addEventListener("DOMContentLoaded", () => {
+  const resetMediaDbBtn = document.getElementById("resetMediaDbBtn");
+  if (resetMediaDbBtn) {
+    resetMediaDbBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to delete all uploaded photos and videos? This cannot be undone.")) {
+        const req1 = indexedDB.deleteDatabase("LiveImageDB");
+        const req2 = indexedDB.deleteDatabase("LiveWallpaperDB");
+        
+        let done = 0;
+        const checkDone = () => {
+          done++;
+          if (done === 2) {
+            alert("Media databases cleared. Reloading page...");
+            window.location.reload();
+          }
+        };
+        req1.onsuccess = checkDone;
+        req1.onerror = checkDone;
+        req2.onsuccess = checkDone;
+        req2.onerror = checkDone;
+      }
+    });
+  }
+});
