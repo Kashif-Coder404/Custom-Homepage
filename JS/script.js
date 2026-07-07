@@ -2151,6 +2151,11 @@ function loadWidgetSettings() {
   if (saved) {
     try {
       activeWidgets = JSON.parse(saved);
+      // Migration: If they have exactly the old 9 default widgets, clear it once so they see the new empty default.
+      if (activeWidgets.length === 9 && activeWidgets.includes(".widget-tasbeeh") && !localStorage.getItem("dashboard_migrated_empty")) {
+        activeWidgets = [];
+        localStorage.setItem("dashboard_migrated_empty", "true");
+      }
     } catch (e) {
       activeWidgets = [];
     }
@@ -2207,7 +2212,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   loadWidgetSettings();
   document.body.classList.toggle("widgets-floating", isFloatingMode());
-  setTimeout(() => renderWidgetsLayout(), 500);
+  renderWidgetsLayout();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
