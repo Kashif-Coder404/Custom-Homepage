@@ -866,6 +866,8 @@ loadStopwatchState();
   });
 
   renderEditor();
+})();
+
 //Shortcuts
 
 function openSite(url) {
