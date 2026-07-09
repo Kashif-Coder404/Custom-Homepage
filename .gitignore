@@ -11,3 +11,4 @@ wallpapers/
 # Optional: Ignore node_modules if you use npm
 node_modules/
 ForAI/
+.env
