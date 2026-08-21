@@ -52,46 +52,24 @@
         <div class="glass-panel widget-tasks modern-tasks" id="tasksWidget">
           <div class="tasks-layout">
             <div class="tasks-left">
-              <div class="tasks-header-row">
-                <div
-                  class="widget-header"
-                  id="tasksDropdownToggle"
-                  style="cursor: pointer; flex: 1"
+              <div
+                class="widget-header"
+                id="tasksDropdownToggle"
+                style="cursor: pointer;"
+              >
+                <h2>Tasks</h2>
+                <svg
+                  id="tasksChevron"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  style="transition: 0.3s; transform: rotate(180deg); margin-left: 5px;"
                 >
-                  <h2>Tasks</h2>
-                  <svg
-                    id="tasksChevron"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    style="
-                      transition: 0.3s;
-                      transform: rotate(180deg);
-                      margin-left: 5px;
-                    "
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </div>
-                <button
-                  id="openFullTasksBtn"
-                  class="icon-btn soft-btn"
-                  title="Open Full Task Board"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                  </svg>
-                </button>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </div>
               <div
                 id="tasksDropdownContent"
@@ -967,58 +945,51 @@
           <!-- TAB: THEMES -->
           <div id="tab-themes" class="tab-content active">
             <div class="settings-section">
+              <h3>Complete Themes</h3>
+              <div class="theme-preset-options">
+                <button class="theme-preset-btn active" data-preset="default">Default Dark</button>
+                <button class="theme-preset-btn" data-preset="light">Minimal Light</button>
+                <button class="theme-preset-btn" data-preset="cyberpunk">Cyberpunk</button>
+                <button class="theme-preset-btn" data-preset="ocean">Ocean Dark</button>
+                <button class="theme-preset-btn" data-preset="forest">Forest</button>
+              </div>
+            </div>
+
+            <div class="settings-section" style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <h3>Glass Effect</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Enable translucent panels and blur.</p>
+              </div>
+              <div class="switch-wrapper">
+                <input class="tgl tgl-flat" id="glassModeToggle" type="checkbox" checked />
+                <label class="tgl-btn" for="glassModeToggle"></label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Background Blur Intensity</h3>
+              <input type="range" id="bgBlurSlider" min="0" max="40" value="0" style="width: 100%; margin-top: 10px; accent-color: var(--primary-color);">
+            </div>
+
+            <div class="settings-section">
               <h3>Accent Color</h3>
               <div class="theme-options">
-                <div
-                  class="themeOpt active"
-                  data-theme="#6366f1"
-                  style="background: #6366f1"
-                ></div>
-                <div
-                  class="themeOpt"
-                  data-theme="#10b981"
-                  style="background: #10b981"
-                ></div>
-                <div
-                  class="themeOpt"
-                  data-theme="#f43f5e"
-                  style="background: #f43f5e"
-                ></div>
-                <div
-                  class="themeOpt"
-                  data-theme="#06b6d4"
-                  style="background: #06b6d4"
-                ></div>
-                <div
-                  class="themeOpt"
-                  data-theme="#a855f7"
-                  style="background: #a855f7"
-                ></div>
-                <div
-                  class="themeOpt"
-                  data-theme="#f59e0b"
-                  style="background: #f59e0b"
-                ></div>
+                <div class="themeOpt active" data-theme="#6366f1" style="background: #6366f1"></div>
+                <div class="themeOpt" data-theme="#10b981" style="background: #10b981"></div>
+                <div class="themeOpt" data-theme="#f43f5e" style="background: #f43f5e"></div>
+                <div class="themeOpt" data-theme="#06b6d4" style="background: #06b6d4"></div>
+                <div class="themeOpt" data-theme="#a855f7" style="background: #a855f7"></div>
+                <div class="themeOpt" data-theme="#f59e0b" style="background: #f59e0b"></div>
               </div>
             </div>
 
             <div class="settings-section">
               <h3>Solid Background Colors</h3>
               <div class="staticOptCont solidColorsCont">
-                <div
-                  class="staticOpt active"
-                  data-bg-type="color"
-                  data-val="#07090e"
-                  style="background: #07090e"
-                >
+                <div class="staticOpt active" data-bg-type="color" data-val="#07090e" style="background: #07090e">
                   <span class="opt-label">Default Dark</span>
                 </div>
-                <div
-                  class="staticOpt"
-                  data-bg-type="color"
-                  data-val="#0f172a"
-                  style="background: #0f172a"
-                >
+                <div class="staticOpt" data-bg-type="color" data-val="#0f172a" style="background: #0f172a">
                   <span class="opt-label">Deep Slate</span>
                 </div>
               </div>

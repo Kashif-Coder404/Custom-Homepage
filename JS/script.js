@@ -1507,31 +1507,91 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchWeather();
       });
     }
+  } 
+});
+
+  // --- THEME COLOR ---
+  const themeOpts = document.querySelectorAll(".themeOpt");
+  
+  function setTheme(color) {
+    document.documentElement.style.setProperty("--primary-color", color);
+    document.documentElement.style.setProperty("--primary-hover", color);
+    localStorage.setItem("dashboard_theme", color);
+  
+    themeOpts.forEach((opt) => opt.classList.remove("active"));
+    themeOpts.forEach((opt) => {
+      if (opt.dataset.theme === color) opt.classList.add("active");
+    });
   }
-});
-
-// --- THEME COLOR ---
-const themeOpts = document.querySelectorAll(".themeOpt");
-
-function setTheme(color) {
-  document.documentElement.style.setProperty("--primary-color", color);
-  document.documentElement.style.setProperty("--primary-hover", color);
-  localStorage.setItem("dashboard_theme", color);
-
-  themeOpts.forEach((opt) => opt.classList.remove("active"));
+  
+  const savedTheme = localStorage.getItem("dashboard_theme");
+  if (savedTheme) setTheme(savedTheme);
+  
   themeOpts.forEach((opt) => {
-    if (opt.dataset.theme === color) opt.classList.add("active");
+    opt.addEventListener("click", () => setTheme(opt.dataset.theme));
   });
-}
 
-const savedTheme = localStorage.getItem("dashboard_theme");
-if (savedTheme) setTheme(savedTheme);
+  // --- COMPLETE THEMES ---
+  const themePresetBtns = document.querySelectorAll(".theme-preset-btn");
+  
+  function setCompleteTheme(presetName) {
+    document.body.dataset.theme = presetName;
+    localStorage.setItem("dashboard_preset_theme", presetName);
 
-themeOpts.forEach((opt) => {
-  opt.addEventListener("click", () => setTheme(opt.dataset.theme));
-});
+    themePresetBtns.forEach(btn => btn.classList.remove("active"));
+    const activeBtn = Array.from(themePresetBtns).find(btn => btn.dataset.preset === presetName);
+    if (activeBtn) activeBtn.classList.add("active");
+  }
 
-// --- BACKGROUNDS (Static & Video) ---
+  const savedPresetTheme = localStorage.getItem("dashboard_preset_theme") || "default";
+  setCompleteTheme(savedPresetTheme);
+
+  themePresetBtns.forEach(btn => {
+    btn.addEventListener("click", () => setCompleteTheme(btn.dataset.preset));
+  });
+
+  // --- GLASS MODE TOGGLE ---
+  const glassModeToggle = document.getElementById("glassModeToggle");
+
+  function setGlassMode(isGlassEnabled) {
+    if (isGlassEnabled) {
+      document.body.classList.remove("glass-disabled");
+    } else {
+      document.body.classList.add("glass-disabled");
+    }
+    if (glassModeToggle) glassModeToggle.checked = isGlassEnabled;
+    localStorage.setItem("dashboard_glass_mode", isGlassEnabled ? "true" : "false");
+  }
+
+  const savedGlassMode = localStorage.getItem("dashboard_glass_mode");
+  const isGlass = savedGlassMode !== null ? savedGlassMode === "true" : true;
+  setGlassMode(isGlass);
+
+  if (glassModeToggle) {
+    glassModeToggle.addEventListener("change", (e) => {
+      setGlassMode(e.target.checked);
+    });
+  }
+
+  // --- BACKGROUND BLUR ---
+  const bgBlurSlider = document.getElementById("bgBlurSlider");
+
+  function setBgBlur(value) {
+    document.documentElement.style.setProperty("--bg-blur", `${value}px`);
+    if (bgBlurSlider) bgBlurSlider.value = value;
+    localStorage.setItem("dashboard_bg_blur", value);
+  }
+
+  const savedBgBlur = localStorage.getItem("dashboard_bg_blur") || "0";
+  setBgBlur(savedBgBlur);
+
+  if (bgBlurSlider) {
+    bgBlurSlider.addEventListener("input", (e) => {
+      setBgBlur(e.target.value);
+    });
+  }
+
+  // --- BACKGROUNDS (Static & Video) ---
 
 const videos = {};
 const imageWallpapersCont = document.querySelector(".imageWallpapersCont");
@@ -1576,6 +1636,15 @@ async function saveImageToDB(id, file) {
     const db = await openImageDB();
     const tx = db.transaction(IMAGE_STORE_NAME, "readwrite");
     tx.objectStore(IMAGE_STORE_NAME).put({ id, file });
+    return new Promise((r) => (tx.oncomplete = r));
+  } catch (err) { console.error(err); }
+}
+
+async function deleteImageFromDB(id) {
+  try {
+    const db = await openImageDB();
+    const tx = db.transaction(IMAGE_STORE_NAME, "readwrite");
+    tx.objectStore(IMAGE_STORE_NAME).delete(id);
     return new Promise((r) => (tx.oncomplete = r));
   } catch (err) { console.error(err); }
 }
@@ -1625,11 +1694,29 @@ function addUploadedImageToUI(id, url) {
   div.className = "staticOpt";
   div.dataset.bgType = "image";
   div.dataset.val = id;
+  div.style.position = "relative";
   const img = document.createElement("img");
   img.src = url;
   img.loading = "lazy";
   div.appendChild(img);
   
+  const removeBtn = document.createElement("button");
+  removeBtn.innerHTML = "&times;";
+  removeBtn.className = "remove-media-btn";
+  removeBtn.onclick = async (e) => {
+    e.stopPropagation();
+    if (confirm("Remove this photo?")) {
+      await deleteImageFromDB(id);
+      delete uploadedImagesMap[id];
+      div.remove();
+      const saved = localStorage.getItem("dashboard_bg_static");
+      if (saved && JSON.parse(saved).val === id) {
+        localStorage.removeItem("dashboard_bg_static");
+      }
+    }
+  };
+  div.appendChild(removeBtn);
+
   imageWallpapersCont.insertBefore(div, uploadImageDiv);
   
   div.addEventListener("click", () => {
@@ -1676,6 +1763,15 @@ async function saveVideoToDB(id, file) {
   } catch (err) { console.error(err); }
 }
 
+async function deleteVideoFromDB(id) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).delete(id);
+    return new Promise((r) => (tx.oncomplete = r));
+  } catch (err) { console.error(err); }
+}
+
 async function loadVideosFromDB() {
   try {
     const db = await openDB();
@@ -1702,7 +1798,7 @@ uploadVideoDiv.style.fontSize = "14px";
 uploadVideoDiv.style.fontWeight = "bold";
 uploadVideoDiv.style.minHeight = "80px"; // Give it some space in case videoOpt relies on child image height
 uploadVideoDiv.style.boxSizing = "border-box";
-uploadVideoDiv.innerHTML = "<span>+ Add Videos</span>";
+uploadVideoDiv.innerHTML = "<span class='upload-vid-text'>+ Add Videos (0/5)</span>";
 
 const videoFileInput = document.createElement("input");
 videoFileInput.type = "file";
@@ -1713,7 +1809,20 @@ videoFileInput.style.display = "none";
 uploadVideoDiv.appendChild(videoFileInput);
 liveWallpapersCont.appendChild(uploadVideoDiv);
 
+function updateUploadVideoBtn() {
+  const current = Object.keys(uploadedVideosMap).length;
+  const textSpan = uploadVideoDiv.querySelector(".upload-vid-text");
+  if (textSpan) {
+    textSpan.innerText = `+ Add Videos (${current}/5)`;
+  }
+}
+
 uploadVideoDiv.addEventListener("click", () => {
+  const current = Object.keys(uploadedVideosMap).length;
+  if (current >= 5) {
+    alert("Max limit of 5 uploaded videos reached! Please delete some before adding more.");
+    return;
+  }
   videoFileInput.click();
 });
 
@@ -1721,6 +1830,7 @@ function addUploadedVideoToUI(id, url) {
   const div = document.createElement("div");
   div.className = "videoOpt";
   div.dataset.val = id;
+  div.style.position = "relative";
   const video = document.createElement("video");
   video.src = `${url}#t=0.1`;
   video.muted = true;
@@ -1728,17 +1838,43 @@ function addUploadedVideoToUI(id, url) {
   video.preload = "none";
   div.appendChild(video);
   
+  const removeBtn = document.createElement("button");
+  removeBtn.innerHTML = "&times;";
+  removeBtn.className = "remove-media-btn";
+  removeBtn.onclick = async (e) => {
+    e.stopPropagation();
+    if (confirm("Remove this video?")) {
+      await deleteVideoFromDB(id);
+      delete uploadedVideosMap[id];
+      div.remove();
+      updateUploadVideoBtn();
+      if (localStorage.getItem("dashboard_bg_video") === id) {
+        localStorage.removeItem("dashboard_bg_video");
+      }
+    }
+  };
+  div.appendChild(removeBtn);
+
   liveWallpapersCont.insertBefore(div, uploadVideoDiv);
   
   div.addEventListener("click", () => {
     setVideoBackground(id);
   });
   videoOpts = document.querySelectorAll(".videoOpt");
+  updateUploadVideoBtn();
 }
 
 videoFileInput.addEventListener("change", async (e) => {
-  const files = e.target.files;
-  for (let file of files) {
+  const files = Array.from(e.target.files);
+  const current = Object.keys(uploadedVideosMap).length;
+  const allowed = Math.max(0, 5 - current);
+
+  if (files.length > allowed) {
+    alert(`You can only upload ${allowed} more video(s). The extra files were ignored.`);
+  }
+
+  const filesToProcess = files.slice(0, allowed);
+  for (let file of filesToProcess) {
     if (file.type.startsWith("video/")) {
       const id = "uploaded_video_" + Date.now() + "_" + Math.floor(Math.random()*1000);
       await saveVideoToDB(id, file);
@@ -1747,6 +1883,7 @@ videoFileInput.addEventListener("change", async (e) => {
       addUploadedVideoToUI(id, url);
     }
   }
+  videoFileInput.value = "";
 });
 // --------------------------------
 const bgLayer = document.querySelector(".bg-layer");
@@ -1755,17 +1892,15 @@ const body = document.body;
 function applyLayerVisibility(hasVideo, hasImage) {
   if (hasVideo) {
     bgVideoFrame.style.display = "block";
-    body.style.backgroundImage = "none";
     bgLayer.style.opacity = "0";
   } else if (hasImage) {
     bgVideoFrame.style.display = "none";
     bgVideoFrame.src = "";
-    bgLayer.style.opacity = "0";
+    bgLayer.style.opacity = "1";
   } else {
     bgVideoFrame.style.display = "none";
     bgVideoFrame.src = "";
     bgLayer.style.opacity = "1";
-    body.style.backgroundImage = "none";
   }
 }
 
@@ -1777,15 +1912,20 @@ function setStaticBackground(type, val) {
   const activeOpt = Array.from(staticOpts).find((o) => o.dataset.val === val);
   if (activeOpt) activeOpt.classList.add("active");
 
+  // Remove any stale background styles on body
+  body.style.backgroundImage = "none";
+  body.style.backgroundColor = "";
+
   if (type === "color") {
-    body.style.backgroundColor = val;
+    bgLayer.style.backgroundImage = "none";
+    bgLayer.style.backgroundColor = val;
     applyLayerVisibility(false, false);
   } else if (type === "image") {
-    body.style.backgroundColor = "#000";
+    bgLayer.style.backgroundColor = "#000";
     const actualUrl = uploadedImagesMap[val] || val;
-    body.style.backgroundImage = `url('${actualUrl}')`;
-    body.style.backgroundSize = "cover";
-    body.style.backgroundPosition = "center";
+    bgLayer.style.backgroundImage = `url('${actualUrl}')`;
+    bgLayer.style.backgroundSize = "cover";
+    bgLayer.style.backgroundPosition = "center";
     applyLayerVisibility(false, true);
   }
 
@@ -1979,16 +2119,58 @@ function defaultPositionForIndex(i) {
   };
 }
 
-function ensureWidgetCloseButtons() {
+let maxZIndex = 100;
+const FIXED_LAYOUT_KEY = "dashboard_fixed_layout_state";
+const WIDGET_SIZE_KEY = "dashboard_widget_sizes";
+
+function loadFixedLayout() {
+  try {
+    return JSON.parse(localStorage.getItem(FIXED_LAYOUT_KEY)) || { left: [], center: [], right: [] };
+  } catch (e) {
+    return { left: [], center: [], right: [] };
+  }
+}
+
+function saveFixedLayout(layout) {
+  localStorage.setItem(FIXED_LAYOUT_KEY, JSON.stringify(layout));
+}
+
+function getWidgetSizes() {
+  try {
+    return JSON.parse(localStorage.getItem(WIDGET_SIZE_KEY)) || [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveWidgetSizes(sizes) {
+  localStorage.setItem(WIDGET_SIZE_KEY, JSON.stringify(sizes));
+}
+
+function setupWidgetTools() {
+  const sizes = getWidgetSizes();
   Object.entries(allWidgetsMap).forEach(([sel, el]) => {
     if (!el) return;
-    if (el.querySelector(".widget-close-btn")) return;
+    
+    // Z-Index Management
+    if (!el.dataset.zbound) {
+      el.addEventListener("pointerdown", () => {
+        maxZIndex++;
+        el.style.zIndex = maxZIndex;
+      });
+      el.dataset.zbound = "true";
+    }
+
+    // Apply saved size (Removed widget-expanded logic, leaving this block empty or removed entirely)
+
+    if (el.classList.contains("has-tools")) return;
+    el.classList.add("has-tools");
+
+    // Close Button
     const closeBtn = document.createElement("button");
     closeBtn.className = "widget-close-btn";
     closeBtn.type = "button";
     closeBtn.title = "Hide widget";
-    closeBtn.setAttribute("aria-label", "Hide widget");
-    closeBtn.dataset.widgetSel = sel;
     closeBtn.innerHTML = "&times;";
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1996,31 +2178,30 @@ function ensureWidgetCloseButtons() {
       renderWidgetsLayout();
     });
     el.appendChild(closeBtn);
+
+    // Drag Handle
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "widget-drag-handle";
+    handle.title = "Drag to move";
+    handle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+    el.appendChild(handle);
+
+    bindWidgetDrag(el, sel, handle);
   });
 }
 
-function ensureDragHandle(el, sel) {
-  if (!isFloatingMode() || el.querySelector(".widget-drag-handle")) return;
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "widget-drag-handle";
-  btn.title = "Drag to move";
-  btn.setAttribute("aria-label", "Drag to move");
-  btn.innerHTML =
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
-  btn.addEventListener("click", (e) => e.preventDefault());
-  el.insertBefore(btn, el.firstChild);
-  bindWidgetDrag(el, sel, btn);
-}
-
 const dragBindings = new WeakSet();
+let currentDraggedWidgetSel = null;
+let currentDraggedWidgetHeight = 0;
 
 function bindWidgetDrag(el, sel, handle) {
   if (dragBindings.has(handle)) return;
   dragBindings.add(handle);
 
+  // Floating Mode Pointer Drag
   handle.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || !isFloatingMode()) return;
     e.preventDefault();
     e.stopPropagation();
     const rect = el.getBoundingClientRect();
@@ -2059,6 +2240,150 @@ function bindWidgetDrag(el, sel, handle) {
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp, { once: true });
   });
+
+  // Fixed Mode HTML5 Drag
+  handle.addEventListener("mousedown", () => {
+    if (!isFloatingMode()) el.draggable = true;
+  });
+  handle.addEventListener("mouseup", () => {
+    if (!isFloatingMode()) el.draggable = false;
+  });
+  
+  el.addEventListener("dragstart", (e) => {
+    if (isFloatingMode()) {
+      e.preventDefault();
+      return;
+    }
+    currentDraggedWidgetSel = sel;
+    currentDraggedWidgetHeight = el.offsetHeight;
+    e.dataTransfer.setData("text/plain", sel);
+    e.dataTransfer.effectAllowed = "move";
+    setTimeout(() => el.style.opacity = "0.4", 0);
+  });
+  el.addEventListener("dragend", () => {
+    currentDraggedWidgetSel = null;
+    el.draggable = false;
+    el.style.opacity = "1";
+    document.querySelectorAll(".widget-placeholder").forEach(p => p.remove());
+    document.querySelectorAll(".drag-over").forEach(col => col.classList.remove("drag-over"));
+  });
+}
+
+// Fixed Layout Drop Zones
+[leftSidebar, centerSidebar, rightSidebar].forEach(sidebar => {
+  if (!sidebar) return;
+  sidebar.addEventListener("dragover", (e) => {
+    if (isFloatingMode()) return;
+    e.preventDefault();
+    sidebar.classList.add("drag-over");
+    
+    const draggedEl = allWidgetsMap[currentDraggedWidgetSel];
+    if (!draggedEl) return;
+
+    let placeholder = document.querySelector(".widget-placeholder");
+    if (!placeholder) {
+      placeholder = document.createElement("div");
+      placeholder.className = "widget-placeholder";
+    }
+
+    let willFit = true;
+    if (sidebar.id !== "centerSidebar") {
+      let currentHeight = 0;
+      let visibleCount = 0;
+      Array.from(sidebar.querySelectorAll(".glass-panel")).forEach(w => {
+        if (w !== draggedEl && !w.classList.contains("widget-placeholder")) {
+          currentHeight += w.offsetHeight;
+          visibleCount++;
+        }
+      });
+      const style = window.getComputedStyle(sidebar);
+      const paddingTop = parseFloat(style.paddingTop) || 0;
+      const paddingBottom = parseFloat(style.paddingBottom) || 0;
+      const gap = parseFloat(style.gap) || 20;
+      
+      const availableHeight = sidebar.clientHeight - paddingTop - paddingBottom;
+      const projectedHeight = currentHeight + currentDraggedWidgetHeight + (visibleCount * gap);
+
+      // Add 60px tolerance to account for zoom scaling rounding errors
+      if (projectedHeight > availableHeight + 60) {
+        willFit = false;
+      }
+    }
+
+    if (sidebar.id !== "centerSidebar" && draggedEl.parentNode !== sidebar && sidebar.querySelectorAll(".glass-panel").length >= 3) {
+      willFit = false;
+    }
+    if (sidebar.id === "centerSidebar" && draggedEl.parentNode !== sidebar && sidebar.querySelectorAll(".glass-panel").length >= 2) {
+      willFit = false;
+    }
+
+    if (!willFit) {
+      placeholder.classList.add("placeholder-invalid");
+      e.dataTransfer.dropEffect = "none";
+    } else {
+      placeholder.classList.remove("placeholder-invalid");
+      e.dataTransfer.dropEffect = "move";
+    }
+    
+    const afterElement = getDragAfterElement(sidebar, e.clientY);
+    if (afterElement == null) {
+      sidebar.appendChild(placeholder);
+    } else {
+      sidebar.insertBefore(placeholder, afterElement);
+    }
+  });
+
+  sidebar.addEventListener("dragleave", () => {
+    sidebar.classList.remove("drag-over");
+  });
+
+  sidebar.addEventListener("drop", (e) => {
+    if (isFloatingMode()) return;
+    e.preventDefault();
+    sidebar.classList.remove("drag-over");
+    
+    const placeholder = document.querySelector(".widget-placeholder");
+    if (placeholder && placeholder.classList.contains("placeholder-invalid")) {
+      alert("Widget cannot fit in this area due to height limits or max widget limits!");
+      placeholder.remove();
+      return;
+    }
+
+    const sel = e.dataTransfer.getData("text/plain");
+    const el = allWidgetsMap[sel];
+    if (!el) {
+      placeholder?.remove();
+      return;
+    }
+
+    if (placeholder && placeholder.parentNode === sidebar) {
+      sidebar.insertBefore(el, placeholder);
+    } else {
+      sidebar.appendChild(el);
+    }
+    placeholder?.remove();
+
+    // Save layout state
+    const layout = {
+      left: Array.from(leftSidebar.querySelectorAll(".glass-panel")).map(w => w.dataset.widgetSel || Object.keys(allWidgetsMap).find(key => allWidgetsMap[key] === w)),
+      center: Array.from(centerSidebar.querySelectorAll(".glass-panel")).map(w => w.dataset.widgetSel || Object.keys(allWidgetsMap).find(key => allWidgetsMap[key] === w)),
+      right: Array.from(rightSidebar.querySelectorAll(".glass-panel")).map(w => w.dataset.widgetSel || Object.keys(allWidgetsMap).find(key => allWidgetsMap[key] === w))
+    };
+    saveFixedLayout(layout);
+  });
+});
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll(".glass-panel:not(.is-dragging)")];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 function renderFloatingLayout() {
@@ -2079,16 +2404,13 @@ function renderFloatingLayout() {
     el.style.position = "fixed";
     const saved = positions[sel];
     const def = defaultPositionForIndex(idx);
-    const left =
-      saved && typeof saved.left === "number" ? saved.left : def.left;
+    const left = saved && typeof saved.left === "number" ? saved.left : def.left;
     const top = saved && typeof saved.top === "number" ? saved.top : def.top;
-    const width =
-      saved && typeof saved.width === "number" ? saved.width : def.width;
+    const width = saved && typeof saved.width === "number" ? saved.width : def.width;
     el.style.left = `${Math.min(left, window.innerWidth - 40)}px`;
     el.style.top = `${Math.min(top, window.innerHeight - 40)}px`;
     el.style.width = `${Math.min(width, window.innerWidth - 16)}px`;
     layer.appendChild(el);
-    ensureDragHandle(el, sel);
     clampWidgetToViewport(el);
     idx++;
   });
@@ -2103,39 +2425,51 @@ function renderFixedLayout() {
 
   Object.values(allWidgetsMap).forEach((w) => {
     clearInlineLayoutStyles(w);
-    const h = w.querySelector(".widget-drag-handle");
-    if (h) h.remove();
     w.remove();
   });
 
-  const rightBatch = [];
-  const leftBatch = [];
-  const centerBatch = [];
+  const layout = loadFixedLayout();
+  layout.left = layout.left.filter(sel => activeWidgets.includes(sel));
+  layout.center = layout.center.filter(sel => activeWidgets.includes(sel));
+  layout.right = layout.right.filter(sel => activeWidgets.includes(sel));
+  
+  const inLayout = new Set([...layout.left, ...layout.center, ...layout.right]);
+  const missing = activeWidgets.filter(sel => !inLayout.has(sel));
+  
+  missing.forEach((sel) => {
+    if (layout.left.length < 3) layout.left.push(sel);
+    else if (layout.right.length < 3) layout.right.push(sel);
+    else if (layout.center.length < 2) layout.center.push(sel);
+  });
+  
+  saveFixedLayout(layout);
 
-  activeWidgets.forEach((sel, index) => {
+  layout.right.forEach((sel) => rightSidebar.appendChild(allWidgetsMap[sel]));
+  layout.left.forEach((sel) => leftSidebar.appendChild(allWidgetsMap[sel]));
+  layout.center.forEach((sel) => centerSidebar.appendChild(allWidgetsMap[sel]));
+
+  [...layout.right, ...layout.left].forEach((sel) => {
     const w = allWidgetsMap[sel];
     if (!w) return;
-    
-    // Distribute left -> center -> right (round robin)
-    const colIndex = index % 3;
-    if (colIndex === 0) leftBatch.push(w);
-    else if (colIndex === 1) centerBatch.push(w);
-    else rightBatch.push(w);
+    w.style.flex = "none";
+    w.style.height = "fit-content";
+    w.style.maxHeight = "100%";
+    w.style.overflowY = "auto";
   });
 
-  rightBatch.forEach((w) => rightSidebar.appendChild(w));
-  leftBatch.forEach((w) => leftSidebar.appendChild(w));
-  centerBatch.forEach((w) => centerSidebar.appendChild(w));
-
-  [...rightBatch, ...leftBatch, ...centerBatch].forEach((w) => {
+  layout.center.forEach((sel) => {
+    const w = allWidgetsMap[sel];
+    if (!w) return;
     w.style.flex = "0 1 auto";
+    w.style.height = "fit-content";
     w.style.minHeight = "0";
-    w.style.overflow = "visible";
+    w.style.overflow = "auto";
   });
 }
 
 function renderWidgetsLayout() {
   if (!leftSidebar || !rightSidebar || !centerSidebar) return;
+  setupWidgetTools();
   if (isFloatingMode()) renderFloatingLayout();
   else renderFixedLayout();
 
@@ -2153,7 +2487,6 @@ function loadWidgetSettings() {
   if (saved) {
     try {
       activeWidgets = JSON.parse(saved);
-      // Migration: If they have exactly the old 9 default widgets, clear it once so they see the new empty default.
       if (activeWidgets.length === 9 && activeWidgets.includes(".widget-tasbeeh") && !localStorage.getItem("dashboard_migrated_empty")) {
         activeWidgets = [];
         localStorage.setItem("dashboard_migrated_empty", "true");
@@ -2164,7 +2497,6 @@ function loadWidgetSettings() {
   } else {
     activeWidgets = [];
   }
-  ensureWidgetCloseButtons();
   renderWidgetsLayout();
 }
 
@@ -2172,6 +2504,11 @@ widgetToggles.forEach((toggle) => {
   toggle.addEventListener("change", () => {
     const sel = toggle.dataset.widget;
     if (toggle.checked) {
+      if (!isFloatingMode() && activeWidgets.length >= 8) {
+        alert("Max widget limit reached. Try turning on Floating widgets!");
+        toggle.checked = false;
+        return;
+      }
       if (!activeWidgets.includes(sel)) activeWidgets.push(sel);
     } else {
       activeWidgets = activeWidgets.filter((w) => w !== sel);
