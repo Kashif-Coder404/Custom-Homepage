@@ -4,16 +4,30 @@ const suggestionsBox = document.getElementById("suggestionsBox");
 let searchEngine = "DEF";
 
 const engineButtons = document.querySelectorAll(".searchEngines .engine");
-const saveToggle = document.getElementById("switch-on-off");
+const saveEngineBtn = document.getElementById("saveEngineBtn");
 
 const ENGINE_KEY = "preferredEngine";
 const SAVE_KEY = "saveEngineEnabled";
 
-(function initEngine() {
-  const saveEnabled = localStorage.getItem(SAVE_KEY) === "true";
-  saveToggle.checked = saveEnabled;
+let isEngineSaveEnabled = localStorage.getItem(SAVE_KEY) === "true";
 
-  if (saveEnabled) {
+function updateSaveEngineBtnUI() {
+  if (!saveEngineBtn) return;
+  saveEngineBtn.classList.toggle("active", isEngineSaveEnabled);
+  saveEngineBtn.setAttribute("aria-pressed", isEngineSaveEnabled);
+  const label = saveEngineBtn.querySelector(".save-btn-label");
+  if (label) {
+    label.textContent = isEngineSaveEnabled ? "Engine Saved" : "Save Engine";
+  }
+  saveEngineBtn.title = isEngineSaveEnabled
+    ? "Auto-saving search engine (click to disable)"
+    : "Click to save selected search engine as default";
+}
+
+(function initEngine() {
+  updateSaveEngineBtnUI();
+
+  if (isEngineSaveEnabled) {
     const saved = localStorage.getItem(ENGINE_KEY);
     if (saved) {
       setEngine(saved);
@@ -27,7 +41,7 @@ const SAVE_KEY = "saveEngineEnabled";
 engineButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     setEngine(btn.id);
-    if (saveToggle.checked) {
+    if (isEngineSaveEnabled) {
       localStorage.setItem(ENGINE_KEY, btn.id);
     }
   });
@@ -73,13 +87,15 @@ function normalizeURL(text) {
   return text;
 }
 
-saveToggle.addEventListener("change", () => {
-  localStorage.setItem(SAVE_KEY, saveToggle.checked);
-  if (saveToggle.checked) {
+saveEngineBtn?.addEventListener("click", () => {
+  isEngineSaveEnabled = !isEngineSaveEnabled;
+  localStorage.setItem(SAVE_KEY, isEngineSaveEnabled);
+  if (isEngineSaveEnabled) {
     localStorage.setItem(ENGINE_KEY, searchEngine);
   } else {
     localStorage.removeItem(ENGINE_KEY);
   }
+  updateSaveEngineBtnUI();
 });
 
 window.handleSuggestions = function (data) {
@@ -163,6 +179,37 @@ engines.forEach((engine) => {
   });
 });
 
+// Toast Notification Helper
+function showDashboardToast(message, iconSvg = null) {
+  let toast = document.getElementById("dashboardToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "dashboardToast";
+    toast.className = "dashboard-toast";
+    document.body.appendChild(toast);
+  }
+
+  const defaultIcon = iconSvg || `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+      <path d="m9 14 2 2 4-4"></path>
+    </svg>
+  `;
+
+  toast.innerHTML = `
+    <div class="dashboard-toast-icon">${defaultIcon}</div>
+    <div class="dashboard-toast-content">${message}</div>
+  `;
+
+  toast.classList.add("show");
+
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 5000);
+}
+
 //Main Search Function
 function search() {
   const query = document.getElementById("searchBar").value.trim();
@@ -181,16 +228,24 @@ function search() {
   // 🔎 SEARCH ENGINE FLOW
   let url = "";
 
-  const copyAndOpen = (targetUrl) => {
+  const copyAndOpen = (targetUrl, serviceName = "Gemini") => {
+    const isMac = navigator.userAgent.includes("Mac") || (navigator.platform && navigator.platform.toUpperCase().indexOf("MAC") >= 0);
+    const keyCombo = isMac ? "<kbd>⌘</kbd> + <kbd>V</kbd>" : "<kbd>Ctrl</kbd> + <kbd>V</kbd>";
+
+    showDashboardToast(`Prompt copied! Press ${keyCombo} to paste in ${serviceName} (Opening in 2s...)`);
+
     navigator.clipboard
       .writeText(query)
-      .then(() => window.open(targetUrl, "_blank"))
-      .catch(() => window.open(targetUrl, "_blank"));
+      .catch(() => {});
+
+    setTimeout(() => {
+      window.open(targetUrl, "_blank");
+    }, 2000);
   };
 
   switch (activeEngine) {
     case "GPT":
-      url = `https://chatgpt.com/?q=${encodedQuery}&hints=search`;
+      url = `https://chatgpt.com/?prompt=${encodedQuery}`;
       break;
 
     case "PERP":
@@ -198,11 +253,11 @@ function search() {
       break;
 
     case "GEM":
-      copyAndOpen("https://gemini.google.com/app");
+      copyAndOpen("https://gemini.google.com/app", "Gemini");
       return;
 
     case "CLAUDE":
-      copyAndOpen("https://claude.ai/new");
+      copyAndOpen("https://claude.ai/new", "Claude");
       return;
 
     case "yt":
@@ -2972,3 +3027,728 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// =========================================================================
+// DYNAMIC CATEGORY NAVIGATION & AUTOMATIC FAVICON BOOKMARKS
+// =========================================================================
+(() => {
+  const STORAGE_KEY = "dashboard_nav_categories";
+
+  const DEFAULT_CATEGORIES = [
+    {
+      id: "ai-tools",
+      name: "AI Tools",
+      isCustom: false,
+      iconType: "svg",
+      iconValue: `<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />`,
+      links: [
+        { id: "ai-1", title: "ChatGPT", url: "https://chat.openai.com", icon: "https://i.ibb.co/8L2NpgCj/icons8-chatgpt-50.png", invertDark: true },
+        { id: "ai-2", title: "Claude", url: "https://claude.ai", icon: "https://i.ibb.co/CKymL1Wv/icons8-claude-48.png" },
+        { id: "ai-3", title: "Gemini", url: "https://gemini.google.com", icon: "https://i.ibb.co/bjFT9QRV/icons8-gemini-ai-48.png" },
+        { id: "ai-4", title: "NotebookLM", url: "https://notebooklm.google.com", icon: "https://i.ibb.co/3y8KPmCd/notebooklm-icon.png", invertDark: true }
+      ]
+    },
+    {
+      id: "developer",
+      name: "Developer",
+      isCustom: false,
+      iconType: "svg",
+      iconValue: `<polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline>`,
+      links: [
+        { id: "dev-1", title: "GitHub", url: "https://github.com", icon: "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg", invertDark: true },
+        { id: "dev-2", title: "MDN Docs", url: "https://developer.mozilla.org", icon: "https://i.ibb.co/1fntyTBY/favicon.png" },
+        { id: "dev-3", title: "LeetCode", url: "https://leetcode.com/", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png", invertDark: true },
+        { id: "dev-4", title: "GeeksforGeeks", url: "https://www.geeksforgeeks.org", icon: "https://i.ibb.co/s9f8MrYJ/gfg-favicon.png" }
+      ]
+    },
+    {
+      id: "design",
+      name: "Design",
+      isCustom: false,
+      iconType: "svg",
+      iconValue: `<path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle>`,
+      links: [
+        { id: "des-1", title: "Figma", url: "https://www.figma.com", icon: "https://i.ibb.co/CsWt942s/icons8-figma-48.png" },
+        { id: "des-2", title: "Dribbble", url: "https://dribbble.com/", icon: "https://i.ibb.co/tP8358HN/dribbble.png" },
+        { id: "des-3", title: "Behance", url: "https://behance.net/", icon: "https://i.ibb.co/dsGZZcPk/icons8-behance-48.png" },
+        { id: "des-4", title: "Mobbin", url: "https://mobbin.com/", icon: "https://i.ibb.co/5g6xS8SK/mobbin-icon.png", invertDark: true }
+      ]
+    },
+    {
+      id: "social",
+      name: "Social",
+      isCustom: false,
+      iconType: "svg",
+      iconValue: `<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>`,
+      links: [
+        { id: "soc-1", title: "YouTube", url: "https://www.youtube.com", icon: "https://i.ibb.co/hR0btBW7/icons8-youtube-48.png" },
+        { id: "soc-2", title: "LinkedIn", url: "https://www.linkedin.com", icon: "https://i.ibb.co/cSxZxKQ1/linkedin.png" },
+        { id: "soc-3", title: "X.com", url: "https://www.x.com", icon: "https://i.ibb.co/C3gsCdvB/icons8-x-50.png", invertDark: true },
+        { id: "soc-4", title: "Gmail", url: "https://mail.google.com/", icon: "https://i.ibb.co/VYPLZfsR/gmail.png" }
+      ]
+    }
+  ];
+
+  const PRESET_ICONS = {
+    sparkle: { type: "emoji", value: "✨" },
+    globe: { type: "svg", value: `<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>` },
+    briefcase: { type: "svg", value: `<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>` },
+    gamepad: { type: "svg", value: `<line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="6"></rect>` },
+    film: { type: "svg", value: `<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line>` },
+    music: { type: "svg", value: `<path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>` },
+    newspaper: { type: "svg", value: `<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path>` },
+    shopping: { type: "svg", value: `<circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>` },
+    book: { type: "svg", value: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>` },
+    rocket: { type: "svg", value: `<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>` },
+    zap: { type: "svg", value: `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>` },
+    heart: { type: "svg", value: `<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>` }
+  };
+
+  function loadCategories() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn("Failed to load custom categories:", e);
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+  }
+
+  function saveCategories(categories) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
+    } catch (e) {
+      console.error("Failed to save categories:", e);
+    }
+  }
+
+  function getFaviconUrl(rawUrl) {
+    if (!rawUrl) return "";
+    let url = rawUrl.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+    try {
+      const parsed = new URL(url);
+      const domain = parsed.hostname;
+      return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function suggestTitleFromUrl(rawUrl) {
+    if (!rawUrl) return "";
+    let url = rawUrl.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+    try {
+      const parsed = new URL(url);
+      let host = parsed.hostname.replace(/^www\./, "");
+      let parts = host.split(".");
+      let name = parts[0] || host;
+      if (name) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    } catch (e) {}
+    return "";
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  let categories = loadCategories();
+  let selectedIconPreset = "sparkle";
+
+  let draggedCategoryId = null;
+  let draggedLinkId = null;
+  let draggedFromCatId = null;
+  let isDraggingLinkActive = false;
+
+  function renderCategoryNav(keepOpenCatId = null) {
+    const nav = document.getElementById("categoryNav");
+    if (!nav) return;
+
+    nav.classList.remove("is-reordering");
+    nav.innerHTML = "";
+
+    categories.forEach((cat) => {
+      const group = document.createElement("div");
+      group.className = "nav-group";
+      group.dataset.categoryId = cat.id;
+      group.draggable = true;
+
+      // Keep tab open if requested (e.g. after drag-and-drop or item modification)
+      if (keepOpenCatId && cat.id === keepOpenCatId) {
+        group.classList.add("is-open");
+      }
+
+      // Automatically close tab when cursor leaves the category area
+      group.addEventListener("mouseleave", () => {
+        group.classList.remove("is-open");
+      });
+
+      // Category Pill Drag & Drop
+      group.addEventListener("dragstart", (e) => {
+        if (e.target.closest(".nav-dropdown")) return;
+        draggedCategoryId = cat.id;
+        e.dataTransfer.setData("text/plain", cat.id);
+        e.dataTransfer.effectAllowed = "move";
+        setTimeout(() => {
+          group.classList.add("is-dragging-category");
+          nav.classList.add("is-reordering");
+        }, 0);
+      });
+
+      group.addEventListener("dragend", () => {
+        draggedCategoryId = null;
+        group.classList.remove("is-dragging-category");
+        nav.classList.remove("is-reordering");
+        document.querySelectorAll(".nav-group").forEach((g) => {
+          g.classList.remove("drag-target-left", "drag-target-right");
+        });
+      });
+
+      group.addEventListener("dragover", (e) => {
+        if (draggedCategoryId && draggedCategoryId !== cat.id) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          const rect = group.getBoundingClientRect();
+          const isRight = (e.clientX - rect.left) > (rect.width / 2);
+          group.classList.toggle("drag-target-left", !isRight);
+          group.classList.toggle("drag-target-right", isRight);
+        } else if (draggedLinkId && draggedFromCatId !== cat.id) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          trigger.classList.add("drag-target-pill");
+        }
+      });
+
+      group.addEventListener("dragleave", () => {
+        group.classList.remove("drag-target-left", "drag-target-right");
+        trigger.classList.remove("drag-target-pill");
+      });
+
+      group.addEventListener("drop", (e) => {
+        if (draggedCategoryId && draggedCategoryId !== cat.id) {
+          e.preventDefault();
+          const rect = group.getBoundingClientRect();
+          const isRight = (e.clientX - rect.left) > (rect.width / 2);
+          const fromIndex = categories.findIndex((c) => c.id === draggedCategoryId);
+          const toIndex = categories.findIndex((c) => c.id === cat.id);
+
+          if (fromIndex !== -1 && toIndex !== -1) {
+            const [movedCat] = categories.splice(fromIndex, 1);
+            const newTargetIndex = categories.findIndex((c) => c.id === cat.id);
+            const insertIndex = isRight ? newTargetIndex + 1 : newTargetIndex;
+            categories.splice(insertIndex, 0, movedCat);
+            saveCategories(categories);
+            renderCategoryNav(movedCat.id);
+          }
+        } else if (draggedLinkId && draggedFromCatId !== cat.id) {
+          e.preventDefault();
+          e.stopPropagation();
+          trigger.classList.remove("drag-target-pill");
+          const sourceCat = categories.find((c) => c.id === draggedFromCatId);
+          if (sourceCat) {
+            const linkIdx = sourceCat.links.findIndex((l) => l.id === draggedLinkId);
+            if (linkIdx !== -1) {
+              const [movedLink] = sourceCat.links.splice(linkIdx, 1);
+              if (!cat.links) cat.links = [];
+              cat.links.push(movedLink);
+              saveCategories(categories);
+              renderCategoryNav(cat.id);
+            }
+          }
+        }
+      });
+
+      // Trigger Button
+      const trigger = document.createElement("button");
+      trigger.className = "nav-trigger";
+      trigger.type = "button";
+
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const wasOpen = group.classList.contains("is-open");
+        document.querySelectorAll(".nav-group.is-open").forEach((g) => g.classList.remove("is-open"));
+        if (!wasOpen) group.classList.add("is-open");
+      });
+
+      let iconHtml = "";
+      if (cat.iconType === "emoji") {
+        iconHtml = `<span class="nav-trigger-custom-icon">${escapeHtml(cat.iconValue || "✨")}</span>`;
+      } else {
+        iconHtml = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${cat.iconValue}</svg>`;
+      }
+
+      trigger.innerHTML = `${iconHtml}<span>${escapeHtml(cat.name)}</span>`;
+      group.appendChild(trigger);
+
+      // Dropdown
+      const dropdown = document.createElement("div");
+      dropdown.className = "nav-dropdown custom-scrollbar";
+
+      // Dropdown Header
+      const headerRow = document.createElement("div");
+      headerRow.className = "dropdown-cat-header";
+      headerRow.innerHTML = `<span class="dropdown-cat-title">${escapeHtml(cat.name)}</span>`;
+      if (cat.isCustom) {
+        const delCatBtn = document.createElement("button");
+        delCatBtn.type = "button";
+        delCatBtn.className = "dropdown-cat-del-btn";
+        delCatBtn.title = `Delete "${cat.name}" category`;
+        delCatBtn.innerHTML = `
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete
+        `;
+        delCatBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (confirm(`Delete category "${cat.name}" and all its bookmarks?`)) {
+            categories = categories.filter((c) => c.id !== cat.id);
+            saveCategories(categories);
+            renderCategoryNav();
+          }
+        });
+        headerRow.appendChild(delCatBtn);
+      }
+      dropdown.appendChild(headerRow);
+
+      // Dropdown Links
+      const links = cat.links || [];
+      links.forEach((link) => {
+        const wrap = document.createElement("div");
+        wrap.className = "dropdown-item-wrap";
+        wrap.draggable = true;
+
+        // Subtle grip handle
+        const grip = document.createElement("span");
+        grip.className = "dropdown-drag-grip";
+        grip.title = "Drag to reorder";
+        grip.innerHTML = `
+          <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+            <circle cx="2.5" cy="2.5" r="1.2"></circle>
+            <circle cx="7.5" cy="2.5" r="1.2"></circle>
+            <circle cx="2.5" cy="7" r="1.2"></circle>
+            <circle cx="7.5" cy="7" r="1.2"></circle>
+            <circle cx="2.5" cy="11.5" r="1.2"></circle>
+            <circle cx="7.5" cy="11.5" r="1.2"></circle>
+          </svg>
+        `;
+        wrap.appendChild(grip);
+
+        // Link item Drag & Drop
+        wrap.addEventListener("dragstart", (e) => {
+          e.stopPropagation();
+          draggedLinkId = link.id;
+          draggedFromCatId = cat.id;
+          isDraggingLinkActive = true;
+          e.dataTransfer.setData("application/x-link-id", link.id);
+          e.dataTransfer.setData("application/x-cat-id", cat.id);
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(() => {
+            wrap.classList.add("is-dragging-link");
+          }, 0);
+        });
+
+        wrap.addEventListener("dragend", () => {
+          draggedLinkId = null;
+          draggedFromCatId = null;
+          wrap.classList.remove("is-dragging-link");
+          document.querySelectorAll(".dropdown-item-wrap").forEach((w) => {
+            w.classList.remove("drag-target-top", "drag-target-bottom");
+          });
+          setTimeout(() => {
+            isDraggingLinkActive = false;
+          }, 120);
+        });
+
+        wrap.addEventListener("dragover", (e) => {
+          if (!draggedLinkId || draggedLinkId === link.id) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = "move";
+
+          const rect = wrap.getBoundingClientRect();
+          const isBelow = (e.clientY - rect.top) > (rect.height / 2);
+          wrap.classList.toggle("drag-target-top", !isBelow);
+          wrap.classList.toggle("drag-target-bottom", isBelow);
+        });
+
+        wrap.addEventListener("dragleave", () => {
+          wrap.classList.remove("drag-target-top", "drag-target-bottom");
+        });
+
+        wrap.addEventListener("drop", (e) => {
+          if (!draggedLinkId || draggedLinkId === link.id) return;
+          e.preventDefault();
+          e.stopPropagation();
+
+          const rect = wrap.getBoundingClientRect();
+          const isBelow = (e.clientY - rect.top) > (rect.height / 2);
+
+          const sourceCat = categories.find((c) => c.id === draggedFromCatId);
+          const targetCat = categories.find((c) => c.id === cat.id);
+
+          if (sourceCat && targetCat) {
+            const linkIdx = sourceCat.links.findIndex((l) => l.id === draggedLinkId);
+            if (linkIdx !== -1) {
+              const [movedLink] = sourceCat.links.splice(linkIdx, 1);
+              const targetIdx = targetCat.links.findIndex((l) => l.id === link.id);
+              const insertIdx = isBelow ? targetIdx + 1 : targetIdx;
+              targetCat.links.splice(insertIdx, 0, movedLink);
+              saveCategories(categories);
+              renderCategoryNav(cat.id);
+            }
+          }
+        });
+
+        const a = document.createElement("a");
+        a.href = link.url;
+        a.className = "dropdown-item";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.addEventListener("click", (e) => {
+          if (isDraggingLinkActive) e.preventDefault();
+        });
+
+        const iconSrc = link.icon || getFaviconUrl(link.url);
+        const firstLetter = (link.title || "W").charAt(0).toUpperCase();
+
+        const img = document.createElement("img");
+        img.src = iconSrc;
+        img.alt = link.title;
+        if (link.invertDark) img.classList.add("invert-dark");
+
+        img.onerror = function () {
+          if (!this.dataset.fallbackTried) {
+            this.dataset.fallbackTried = "true";
+            try {
+              let u = link.url.startsWith("http") ? link.url : "https://" + link.url;
+              const host = new URL(u).hostname;
+              this.src = `https://icons.duckduckgo.com/ip3/${host}.ico`;
+              return;
+            } catch (e) {}
+          }
+          const badge = document.createElement("span");
+          badge.className = "dropdown-item-letter-icon";
+          badge.textContent = firstLetter;
+          this.parentNode.replaceChild(badge, this);
+        };
+
+        const span = document.createElement("span");
+        span.textContent = link.title;
+
+        a.appendChild(img);
+        a.appendChild(span);
+        wrap.appendChild(a);
+
+        // Delete button for link
+        const delLinkBtn = document.createElement("button");
+        delLinkBtn.type = "button";
+        delLinkBtn.className = "dropdown-item-delete";
+        delLinkBtn.title = `Remove "${link.title}"`;
+        delLinkBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        `;
+        delLinkBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          cat.links = cat.links.filter((l) => l.id !== link.id);
+          saveCategories(categories);
+          renderCategoryNav(cat.id);
+        });
+        wrap.appendChild(delLinkBtn);
+
+        dropdown.appendChild(wrap);
+      });
+
+      // "+ Add Website" Button
+      const addLinkBtn = document.createElement("button");
+      addLinkBtn.type = "button";
+      addLinkBtn.className = "dropdown-add-btn";
+      addLinkBtn.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Website
+      `;
+      addLinkBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openLinkModal(cat.id, cat.name);
+      });
+      dropdown.appendChild(addLinkBtn);
+
+      group.appendChild(dropdown);
+      nav.appendChild(group);
+    });
+
+    // "+ Add Category" Button at end of Nav
+    const addCatBtn = document.createElement("button");
+    addCatBtn.type = "button";
+    addCatBtn.id = "addCategoryBtn";
+    addCatBtn.className = "nav-add-category-btn";
+    addCatBtn.title = "Add New Category";
+    addCatBtn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    `;
+    addCatBtn.addEventListener("click", openCategoryModal);
+    nav.appendChild(addCatBtn);
+  }
+
+  // --- CATEGORY MODAL LOGIC ---
+  const catModal = document.getElementById("categoryModal");
+  const closeCatBtn = document.getElementById("closeCategoryModalBtn");
+  const cancelCatBtn = document.getElementById("cancelCategoryBtn");
+  const saveCatBtn = document.getElementById("saveCategoryBtn");
+  const catNameInput = document.getElementById("categoryNameInput");
+  const catEmojiInput = document.getElementById("categoryCustomEmojiInput");
+  const presetChips = document.querySelectorAll("#categoryIconPresets .icon-preset-chip");
+
+  function openCategoryModal() {
+    if (!catModal) return;
+    catNameInput.value = "";
+    catEmojiInput.value = "";
+    selectedIconPreset = "sparkle";
+    presetChips.forEach((chip) => {
+      chip.classList.toggle("active", chip.dataset.icon === selectedIconPreset);
+    });
+    catModal.style.display = "flex";
+    setTimeout(() => catNameInput.focus(), 50);
+  }
+
+  function closeCategoryModal() {
+    if (!catModal) return;
+    catModal.style.display = "none";
+  }
+
+  closeCatBtn?.addEventListener("click", closeCategoryModal);
+  cancelCatBtn?.addEventListener("click", closeCategoryModal);
+  catModal?.addEventListener("click", (e) => {
+    if (e.target === catModal) closeCategoryModal();
+  });
+
+  presetChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      presetChips.forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      selectedIconPreset = chip.dataset.icon;
+      catEmojiInput.value = "";
+    });
+  });
+
+  catEmojiInput?.addEventListener("input", () => {
+    if (catEmojiInput.value.trim()) {
+      presetChips.forEach((c) => c.classList.remove("active"));
+    }
+  });
+
+  saveCatBtn?.addEventListener("click", () => {
+    const name = catNameInput.value.trim();
+    if (!name) {
+      catNameInput.focus();
+      catNameInput.style.borderColor = "var(--accent-rose, #ef4444)";
+      setTimeout(() => (catNameInput.style.borderColor = ""), 1500);
+      return;
+    }
+
+    const customEmoji = catEmojiInput.value.trim();
+    let iconType = "svg";
+    let iconValue = "";
+
+    if (customEmoji) {
+      iconType = "emoji";
+      iconValue = customEmoji;
+    } else {
+      const preset = PRESET_ICONS[selectedIconPreset] || PRESET_ICONS.sparkle;
+      iconType = preset.type;
+      iconValue = preset.value;
+    }
+
+    const newCat = {
+      id: "cat-" + Date.now(),
+      name: name,
+      isCustom: true,
+      iconType: iconType,
+      iconValue: iconValue,
+      links: []
+    };
+
+    categories.push(newCat);
+    saveCategories(categories);
+    renderCategoryNav();
+    closeCategoryModal();
+  });
+
+  catNameInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveCatBtn.click();
+    }
+  });
+
+  // --- WEBSITE / LINK MODAL LOGIC ---
+  const linkModal = document.getElementById("linkModal");
+  const closeLinkBtn = document.getElementById("closeLinkModalBtn");
+  const cancelLinkBtn = document.getElementById("cancelLinkBtn");
+  const saveLinkBtn = document.getElementById("saveLinkBtn");
+  const targetCatInput = document.getElementById("targetCategoryId");
+  const linkModalTitle = document.getElementById("linkModalTitle");
+  const linkUrlInput = document.getElementById("linkUrlInput");
+  const linkTitleInput = document.getElementById("linkTitleInput");
+  const previewImg = document.getElementById("linkFaviconPreview");
+  const fallbackSvg = document.getElementById("linkFaviconFallback");
+
+  let urlDebounceTimer = null;
+
+  function updateFaviconPreview(rawUrl) {
+    if (!rawUrl) {
+      previewImg.style.display = "none";
+      fallbackSvg.style.display = "block";
+      return;
+    }
+    const faviconUrl = getFaviconUrl(rawUrl);
+    if (faviconUrl) {
+      previewImg.src = faviconUrl;
+      previewImg.onload = () => {
+        previewImg.style.display = "block";
+        fallbackSvg.style.display = "none";
+      };
+      previewImg.onerror = () => {
+        try {
+          let u = rawUrl.startsWith("http") ? rawUrl : "https://" + rawUrl;
+          const host = new URL(u).hostname;
+          previewImg.src = `https://icons.duckduckgo.com/ip3/${host}.ico`;
+          previewImg.onerror = () => {
+            previewImg.style.display = "none";
+            fallbackSvg.style.display = "block";
+          };
+        } catch (e) {
+          previewImg.style.display = "none";
+          fallbackSvg.style.display = "block";
+        }
+      };
+    } else {
+      previewImg.style.display = "none";
+      fallbackSvg.style.display = "block";
+    }
+  }
+
+  function openLinkModal(categoryId, categoryName) {
+    if (!linkModal) return;
+    targetCatInput.value = categoryId;
+    linkModalTitle.textContent = `Add Website to "${categoryName}"`;
+    linkUrlInput.value = "";
+    linkTitleInput.value = "";
+    previewImg.style.display = "none";
+    fallbackSvg.style.display = "block";
+    linkModal.style.display = "flex";
+    setTimeout(() => linkUrlInput.focus(), 50);
+  }
+
+  function closeLinkModal() {
+    if (!linkModal) return;
+    linkModal.style.display = "none";
+  }
+
+  closeLinkBtn?.addEventListener("click", closeLinkModal);
+  cancelLinkBtn?.addEventListener("click", closeLinkModal);
+  linkModal?.addEventListener("click", (e) => {
+    if (e.target === linkModal) closeLinkModal();
+  });
+
+  linkUrlInput?.addEventListener("input", () => {
+    clearTimeout(urlDebounceTimer);
+    urlDebounceTimer = setTimeout(() => {
+      const val = linkUrlInput.value.trim();
+      updateFaviconPreview(val);
+      if (!linkTitleInput.value.trim() && val) {
+        const suggested = suggestTitleFromUrl(val);
+        if (suggested) linkTitleInput.value = suggested;
+      }
+    }, 200);
+  });
+
+  saveLinkBtn?.addEventListener("click", () => {
+    const catId = targetCatInput.value;
+    let url = linkUrlInput.value.trim();
+    if (!url) {
+      linkUrlInput.focus();
+      linkUrlInput.style.borderColor = "var(--accent-rose, #ef4444)";
+      setTimeout(() => (linkUrlInput.style.borderColor = ""), 1500);
+      return;
+    }
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+
+    let title = linkTitleInput.value.trim();
+    if (!title) {
+      title = suggestTitleFromUrl(url) || "Website";
+    }
+
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat) {
+      closeLinkModal();
+      return;
+    }
+
+    if (!cat.links) cat.links = [];
+    cat.links.push({
+      id: "link-" + Date.now(),
+      title: title,
+      url: url,
+      icon: "" // automatically extracted favicon
+    });
+
+    saveCategories(categories);
+    renderCategoryNav(cat.id);
+    closeLinkModal();
+  });
+
+  [linkUrlInput, linkTitleInput].forEach((input) => {
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveLinkBtn.click();
+      }
+    });
+  });
+
+  // Dismiss any pinned open tabs when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".nav-group") && !e.target.closest(".modal-overlay")) {
+      document.querySelectorAll(".nav-group.is-open").forEach((g) => g.classList.remove("is-open"));
+    }
+  });
+
+  // Initial render when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => renderCategoryNav());
+  } else {
+    renderCategoryNav();
+  }
+})();
+
