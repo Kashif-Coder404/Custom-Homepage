@@ -3125,19 +3125,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function getFaviconUrl(rawUrl) {
-    if (!rawUrl) return "";
+  function getFaviconCandidates(rawUrl, customIcon) {
+    if (customIcon && customIcon.trim()) {
+      return [customIcon.trim()];
+    }
+    if (!rawUrl) return [];
     let url = rawUrl.trim();
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
       url = "https://" + url;
     }
     try {
       const parsed = new URL(url);
+      const origin = parsed.origin;
       const domain = parsed.hostname;
-      return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+      return [
+        `${origin}/favicon.ico`,
+        `${origin}/favicon.png`,
+        `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`,
+        `https://icons.duckduckgo.com/ip3/${domain}.ico`
+      ];
     } catch (e) {
-      return "";
+      return [];
     }
+  }
+
+  function getFaviconUrl(rawUrl, customIcon) {
+    const list = getFaviconCandidates(rawUrl, customIcon);
+    return list.length > 0 ? list[0] : "";
   }
 
   function suggestTitleFromUrl(rawUrl) {
@@ -3426,41 +3440,69 @@ document.addEventListener("DOMContentLoaded", () => {
           if (isDraggingLinkActive) e.preventDefault();
         });
 
-        const iconSrc = link.icon || getFaviconUrl(link.url);
+        const candidates = getFaviconCandidates(link.url, link.icon);
         const firstLetter = (link.title || "W").charAt(0).toUpperCase();
 
-        const img = document.createElement("img");
-        img.src = iconSrc;
-        img.alt = link.title;
-        if (link.invertDark) img.classList.add("invert-dark");
+        if (candidates.length > 0) {
+          const img = document.createElement("img");
+          img.alt = link.title;
+          if (link.invertDark) img.classList.add("invert-dark");
+          img.dataset.candIndex = "0";
+          img.src = candidates[0];
 
-        img.onerror = function () {
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = "true";
-            try {
-              let u = link.url.startsWith("http") ? link.url : "https://" + link.url;
-              const host = new URL(u).hostname;
-              this.src = `https://icons.duckduckgo.com/ip3/${host}.ico`;
-              return;
-            } catch (e) {}
-          }
+          img.onerror = function () {
+            let nextIdx = parseInt(this.dataset.candIndex || "0", 10) + 1;
+            if (nextIdx < candidates.length) {
+              this.dataset.candIndex = String(nextIdx);
+              this.src = candidates[nextIdx];
+            } else {
+              const badge = document.createElement("span");
+              badge.className = "dropdown-item-letter-icon";
+              badge.textContent = firstLetter;
+              if (this.parentNode) {
+                this.parentNode.replaceChild(badge, this);
+              }
+            }
+          };
+          a.appendChild(img);
+        } else {
           const badge = document.createElement("span");
           badge.className = "dropdown-item-letter-icon";
           badge.textContent = firstLetter;
-          this.parentNode.replaceChild(badge, this);
-        };
+          a.appendChild(badge);
+        }
 
         const span = document.createElement("span");
         span.textContent = link.title;
-
-        a.appendChild(img);
         a.appendChild(span);
         wrap.appendChild(a);
+
+        // Actions container for link (Edit + Delete)
+        const actions = document.createElement("div");
+        actions.className = "dropdown-item-actions";
+
+        // Edit button for link
+        const editLinkBtn = document.createElement("button");
+        editLinkBtn.type = "button";
+        editLinkBtn.className = "dropdown-item-action-btn edit-btn";
+        editLinkBtn.title = `Edit "${link.title}"`;
+        editLinkBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+        `;
+        editLinkBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          openLinkModal(cat.id, cat.name, link);
+        });
+        actions.appendChild(editLinkBtn);
 
         // Delete button for link
         const delLinkBtn = document.createElement("button");
         delLinkBtn.type = "button";
-        delLinkBtn.className = "dropdown-item-delete";
+        delLinkBtn.className = "dropdown-item-action-btn delete-btn";
         delLinkBtn.title = `Remove "${link.title}"`;
         delLinkBtn.innerHTML = `
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -3475,7 +3517,9 @@ document.addEventListener("DOMContentLoaded", () => {
           saveCategories(categories);
           renderCategoryNav(cat.id);
         });
-        wrap.appendChild(delLinkBtn);
+        actions.appendChild(delLinkBtn);
+
+        wrap.appendChild(actions);
 
         dropdown.appendChild(wrap);
       });
@@ -3613,56 +3657,71 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeLinkBtn = document.getElementById("closeLinkModalBtn");
   const cancelLinkBtn = document.getElementById("cancelLinkBtn");
   const saveLinkBtn = document.getElementById("saveLinkBtn");
+  const saveLinkBtnText = document.getElementById("saveLinkBtnText");
   const targetCatInput = document.getElementById("targetCategoryId");
+  const editingLinkId = document.getElementById("editingLinkId");
   const linkModalTitle = document.getElementById("linkModalTitle");
   const linkUrlInput = document.getElementById("linkUrlInput");
   const linkTitleInput = document.getElementById("linkTitleInput");
+  const linkIconInput = document.getElementById("linkIconInput");
   const previewImg = document.getElementById("linkFaviconPreview");
   const fallbackSvg = document.getElementById("linkFaviconFallback");
 
   let urlDebounceTimer = null;
 
-  function updateFaviconPreview(rawUrl) {
-    if (!rawUrl) {
+  function updateFaviconPreview(rawUrl, customIcon) {
+    const candidates = getFaviconCandidates(rawUrl, customIcon);
+    if (!candidates || candidates.length === 0) {
       previewImg.style.display = "none";
       fallbackSvg.style.display = "block";
       return;
     }
-    const faviconUrl = getFaviconUrl(rawUrl);
-    if (faviconUrl) {
-      previewImg.src = faviconUrl;
-      previewImg.onload = () => {
-        previewImg.style.display = "block";
-        fallbackSvg.style.display = "none";
-      };
-      previewImg.onerror = () => {
-        try {
-          let u = rawUrl.startsWith("http") ? rawUrl : "https://" + rawUrl;
-          const host = new URL(u).hostname;
-          previewImg.src = `https://icons.duckduckgo.com/ip3/${host}.ico`;
-          previewImg.onerror = () => {
-            previewImg.style.display = "none";
-            fallbackSvg.style.display = "block";
-          };
-        } catch (e) {
-          previewImg.style.display = "none";
-          fallbackSvg.style.display = "block";
-        }
-      };
+
+    let candIdx = 0;
+    function tryNext() {
+      if (candIdx >= candidates.length) {
+        previewImg.style.display = "none";
+        fallbackSvg.style.display = "block";
+        return;
+      }
+      previewImg.src = candidates[candIdx];
+    }
+
+    previewImg.onload = () => {
+      previewImg.style.display = "block";
+      fallbackSvg.style.display = "none";
+    };
+
+    previewImg.onerror = () => {
+      candIdx++;
+      tryNext();
+    };
+
+    tryNext();
+  }
+
+  function openLinkModal(categoryId, categoryName, linkToEdit = null) {
+    if (!linkModal) return;
+    targetCatInput.value = categoryId;
+    if (editingLinkId) editingLinkId.value = linkToEdit ? linkToEdit.id : "";
+
+    if (linkToEdit) {
+      linkModalTitle.textContent = `Edit "${linkToEdit.title}"`;
+      linkUrlInput.value = linkToEdit.url || "";
+      linkTitleInput.value = linkToEdit.title || "";
+      if (linkIconInput) linkIconInput.value = linkToEdit.icon || "";
+      if (saveLinkBtnText) saveLinkBtnText.textContent = "Save Changes";
+      updateFaviconPreview(linkToEdit.url, linkToEdit.icon);
     } else {
+      linkModalTitle.textContent = `Add Website to "${categoryName}"`;
+      linkUrlInput.value = "";
+      linkTitleInput.value = "";
+      if (linkIconInput) linkIconInput.value = "";
+      if (saveLinkBtnText) saveLinkBtnText.textContent = "Add Website";
       previewImg.style.display = "none";
       fallbackSvg.style.display = "block";
     }
-  }
 
-  function openLinkModal(categoryId, categoryName) {
-    if (!linkModal) return;
-    targetCatInput.value = categoryId;
-    linkModalTitle.textContent = `Add Website to "${categoryName}"`;
-    linkUrlInput.value = "";
-    linkTitleInput.value = "";
-    previewImg.style.display = "none";
-    fallbackSvg.style.display = "block";
     linkModal.style.display = "flex";
     setTimeout(() => linkUrlInput.focus(), 50);
   }
@@ -3678,20 +3737,25 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === linkModal) closeLinkModal();
   });
 
-  linkUrlInput?.addEventListener("input", () => {
+  function handleLinkModalInputs() {
     clearTimeout(urlDebounceTimer);
     urlDebounceTimer = setTimeout(() => {
-      const val = linkUrlInput.value.trim();
-      updateFaviconPreview(val);
+      const val = linkUrlInput ? linkUrlInput.value.trim() : "";
+      const customIcon = linkIconInput ? linkIconInput.value.trim() : "";
+      updateFaviconPreview(val, customIcon);
       if (!linkTitleInput.value.trim() && val) {
         const suggested = suggestTitleFromUrl(val);
         if (suggested) linkTitleInput.value = suggested;
       }
     }, 200);
-  });
+  }
+
+  linkUrlInput?.addEventListener("input", handleLinkModalInputs);
+  linkIconInput?.addEventListener("input", handleLinkModalInputs);
 
   saveLinkBtn?.addEventListener("click", () => {
     const catId = targetCatInput.value;
+    const editId = editingLinkId ? editingLinkId.value : "";
     let url = linkUrlInput.value.trim();
     if (!url) {
       linkUrlInput.focus();
@@ -3709,6 +3773,8 @@ document.addEventListener("DOMContentLoaded", () => {
       title = suggestTitleFromUrl(url) || "Website";
     }
 
+    const customIcon = linkIconInput ? linkIconInput.value.trim() : "";
+
     const cat = categories.find((c) => c.id === catId);
     if (!cat) {
       closeLinkModal();
@@ -3716,19 +3782,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!cat.links) cat.links = [];
-    cat.links.push({
-      id: "link-" + Date.now(),
-      title: title,
-      url: url,
-      icon: "" // automatically extracted favicon
-    });
+
+    if (editId) {
+      const existing = cat.links.find((l) => l.id === editId);
+      if (existing) {
+        existing.title = title;
+        existing.url = url;
+        existing.icon = customIcon;
+      }
+    } else {
+      cat.links.push({
+        id: "link-" + Date.now(),
+        title: title,
+        url: url,
+        icon: customIcon
+      });
+    }
 
     saveCategories(categories);
     renderCategoryNav(cat.id);
     closeLinkModal();
   });
 
-  [linkUrlInput, linkTitleInput].forEach((input) => {
+  [linkUrlInput, linkTitleInput, linkIconInput].forEach((input) => {
     input?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();

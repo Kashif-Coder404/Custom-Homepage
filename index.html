@@ -1638,6 +1638,7 @@
         </div>
         <div class="task-modal-body">
           <input type="hidden" id="targetCategoryId" value="" />
+          <input type="hidden" id="editingLinkId" value="" />
           
           <div class="task-field">
             <label for="linkUrlInput">Website URL <span class="req">*</span></label>
@@ -1655,7 +1656,7 @@
           <div class="task-field">
             <label for="linkTitleInput">Website Name / Title</label>
             <div class="title-with-favicon-preview">
-              <div class="favicon-preview-badge" id="faviconPreviewWrap" title="Auto-loaded favicon">
+              <div class="favicon-preview-badge" id="faviconPreviewWrap" title="Favicon preview">
                 <img id="linkFaviconPreview" src="" alt="Favicon" class="favicon-preview-img" style="display: none;" />
                 <svg id="linkFaviconFallback" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -1670,6 +1671,19 @@
                 autocomplete="off"
               />
             </div>
+          </div>
+
+          <div class="task-field">
+            <label for="linkIconInput">Custom Icon URL <span style="font-size: 0.78rem; opacity: 0.6; font-weight: normal;">(Optional)</span></label>
+            <div class="url-input-container">
+              <input
+                type="text"
+                id="linkIconInput"
+                placeholder="e.g. https://example.com/icon.png (leave blank for auto)"
+                autocomplete="off"
+              />
+            </div>
+            <span class="field-hint">Provide a custom image link if auto-detection doesn't show your site's logo.</span>
           </div>
         </div>
         <div class="task-modal-footer">
@@ -1686,7 +1700,7 @@
             >
               <path d="M12 5v14M5 12h14" />
             </svg>
-            Add Website
+            <span id="saveLinkBtnText">Add Website</span>
           </button>
         </div>
       </div>
